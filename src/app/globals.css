@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FAF9F5;
+  --background: #F8F7F4;
   --foreground: #1C1917;
   --card: #FFFFFF;
-  --card-border: #E7E5E4;
-  --accent-gold: #B45309;
-  --accent-rose: #C2410C;
+  --card-border: #EAE8E2;
+  --accent-gold: #C5A880;
+  --accent-gold-hover: #B4966F;
+  --accent-espresso: #2A2624;
 }
 
 body {
@@ -17,17 +18,48 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Elegant serif font for brand headers */
+/* Elegant serif font for brand and headlines */
 .font-serif-brand {
   font-family: Didot, "Bodoni MT", "Cinzel", "Times New Roman", "Yu Mincho", "Hiragino Mincho ProN", serif;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
 }
 
-/* Custom smooth animations */
+/* Soft frosted glass effects */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(234, 232, 226, 0.85);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(220, 218, 212, 0.7);
+}
+
+/* Ambient halo glow */
+@keyframes auraPulse {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.04);
+  }
+}
+
+.animate-aura-pulse {
+  animation: auraPulse 4s ease-in-out infinite;
+}
+
+/* Smooth fade in */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -36,25 +68,24 @@ body {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Elegant scrollbar */
+/* Elegant minimalist scrollbar */
 ::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 5px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5F5F0;
-  border-radius: 9999px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D6D3D1;
+  background: #DDD9D2;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #A8A29E;
+  background: #B8B3AA;
 }
