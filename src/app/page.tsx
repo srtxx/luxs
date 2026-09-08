@@ -10,9 +10,6 @@ import { ToneToolbar, TonePreset, TONE_PRESETS } from '@/components/ToneToolbar'
 import { PrintOrderModal } from '@/components/PrintOrderModal';
 import { ProModal } from '@/components/ProModal';
 import { ContactSheetModal } from '@/components/ContactSheetModal';
-import { CompareSplitModal } from '@/components/CompareSplitModal';
-import { CuratedDeckModal } from '@/components/CuratedDeckModal';
-import { FourCutModal } from '@/components/FourCutModal';
 import { extractBurstFrames, BurstFrame } from '@/lib/video-burst';
 import { scoreAllFrames } from '@/lib/image-scoring';
 import { enhanceImage } from '@/lib/image-enhancer';
@@ -36,9 +33,6 @@ export default function Home() {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false);
-  const [isCompareOpen, setIsCompareOpen] = useState(false);
-  const [isDeckOpen, setIsDeckOpen] = useState(false);
-  const [isFourCutOpen, setIsFourCutOpen] = useState(false);
 
   // Indices of top recommended frames (Rank 1, 2, 3)
   const recommendedIndices = useMemo(() => {
@@ -240,18 +234,12 @@ export default function Home() {
 
       if (e.key === 'Escape') {
         if (isContactSheetOpen) setIsContactSheetOpen(false);
-        else if (isCompareOpen) setIsCompareOpen(false);
-        else if (isDeckOpen) setIsDeckOpen(false);
-        else if (isFourCutOpen) setIsFourCutOpen(false);
         else if (isPrintModalOpen) setIsPrintModalOpen(false);
         else if (isProModalOpen) setIsProModalOpen(false);
         else handleCancel();
       } else if (e.key === 'Enter') {
         const isAnyModalOpen =
           isContactSheetOpen ||
-          isCompareOpen ||
-          isDeckOpen ||
-          isFourCutOpen ||
           isPrintModalOpen ||
           isProModalOpen;
         if (!isAnyModalOpen) {
@@ -267,9 +255,6 @@ export default function Home() {
     handleCancel,
     handleSavePng,
     isContactSheetOpen,
-    isCompareOpen,
-    isDeckOpen,
-    isFourCutOpen,
     isPrintModalOpen,
     isProModalOpen,
   ]);
@@ -307,9 +292,6 @@ export default function Home() {
             isSaving={isSaving}
             isSavingAll={isSavingAll}
             onOpenContactSheet={() => setIsContactSheetOpen(true)}
-            onOpenCompare={() => setIsCompareOpen(true)}
-            onOpenDeck={() => setIsDeckOpen(true)}
-            onOpenFourCut={() => setIsFourCutOpen(true)}
           />
 
           {/* Center Stage: Photo Canvas */}
@@ -344,7 +326,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Discovery Modal 1: Contact Sheet */}
+      {/* Discovery Modal: Contact Sheet (Grid Lightbox) */}
       <ContactSheetModal
         isOpen={isContactSheetOpen}
         onClose={() => setIsContactSheetOpen(false)}
@@ -353,39 +335,6 @@ export default function Home() {
         onSelectIndex={setCurrentIndex}
         favoritedIds={favoritedIds}
         onToggleFavorite={handleToggleFavorite}
-        recommendedIndices={recommendedIndices}
-      />
-
-      {/* Discovery Modal 2: 2-Frame Compare */}
-      <CompareSplitModal
-        isOpen={isCompareOpen}
-        onClose={() => setIsCompareOpen(false)}
-        frames={frames}
-        currentIndex={currentIndex}
-        onSelectWinningIndex={setCurrentIndex}
-        favoritedIds={favoritedIds}
-        onToggleFavorite={handleToggleFavorite}
-        recommendedIndices={recommendedIndices}
-      />
-
-      {/* Discovery Modal 3: Curated Deck */}
-      <CuratedDeckModal
-        isOpen={isDeckOpen}
-        onClose={() => setIsDeckOpen(false)}
-        frames={frames}
-        recommendedIndices={recommendedIndices}
-        onSelectIndex={setCurrentIndex}
-        favoritedIds={favoritedIds}
-        onToggleFavorite={handleToggleFavorite}
-      />
-
-      {/* Discovery Modal 4: 4-Cut Photo */}
-      <FourCutModal
-        isOpen={isFourCutOpen}
-        onClose={() => setIsFourCutOpen(false)}
-        frames={frames}
-        currentIndex={currentIndex}
-        favoritedIds={favoritedIds}
         recommendedIndices={recommendedIndices}
       />
 

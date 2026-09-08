@@ -2,15 +2,7 @@
 
 import React from 'react';
 import { AspectRatio } from './StudioCanvas';
-import {
-  Download,
-  Archive,
-  X,
-  LayoutGrid,
-  Columns2,
-  Compass,
-  LayoutTemplate,
-} from 'lucide-react';
+import { Download, Archive, X, LayoutGrid } from 'lucide-react';
 
 interface StudioHeaderProps {
   aspectRatio: AspectRatio;
@@ -21,9 +13,6 @@ interface StudioHeaderProps {
   isSaving: boolean;
   isSavingAll: boolean;
   onOpenContactSheet: () => void;
-  onOpenCompare: () => void;
-  onOpenDeck: () => void;
-  onOpenFourCut: () => void;
 }
 
 const RATIOS: { id: AspectRatio; label: string }[] = [
@@ -42,13 +31,10 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   isSaving,
   isSavingAll,
   onOpenContactSheet,
-  onOpenCompare,
-  onOpenDeck,
-  onOpenFourCut,
 }) => {
   return (
     <header className="w-full h-13 px-3 sm:px-6 flex items-center justify-between border-b border-[#202020] bg-[#0C0C0C] z-30 select-none">
-      {/* Left: Cancel & Discovery Tools */}
+      {/* Left: Cancel & Contact Sheet Trigger */}
       <div className="flex items-center gap-2 sm:gap-3">
         <button
           type="button"
@@ -57,53 +43,21 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           title="Esc"
         >
           <X className="w-4 h-4" />
-          <span className="hidden lg:inline">キャンセル</span>
+          <span className="hidden sm:inline">キャンセル</span>
         </button>
 
-        <div className="h-4 w-px bg-[#262626] hidden sm:block" />
+        <div className="h-4 w-px bg-[#262626]" />
 
-        {/* Discovery Tools Bar */}
-        <div className="flex items-center gap-1 bg-[#161616] p-0.5 rounded-lg border border-[#262626]">
-          <button
-            type="button"
-            onClick={onOpenContactSheet}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-stone-300 hover:text-white hover:bg-[#262626] transition-colors cursor-pointer"
-            title="全フレーム一覧"
-          >
-            <LayoutGrid className="w-3.5 h-3.5 text-stone-400" />
-            <span className="hidden sm:inline">一覧</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenCompare}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-stone-300 hover:text-white hover:bg-[#262626] transition-colors cursor-pointer"
-            title="2コマ決選比較"
-          >
-            <Columns2 className="w-3.5 h-3.5 text-stone-400" />
-            <span className="hidden sm:inline">比較</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenDeck}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-amber-300 hover:text-amber-200 hover:bg-[#262626] transition-colors cursor-pointer"
-            title="おすすめ候補デッキ"
-          >
-            <Compass className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">おすすめ</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenFourCut}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium text-stone-300 hover:text-white hover:bg-[#262626] transition-colors cursor-pointer"
-            title="4カットフォト作成"
-          >
-            <LayoutTemplate className="w-3.5 h-3.5 text-stone-400" />
-            <span className="hidden sm:inline">4カット</span>
-          </button>
-        </div>
+        {/* Contact Sheet (All Frames Grid) Button */}
+        <button
+          type="button"
+          onClick={onOpenContactSheet}
+          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium text-stone-200 hover:text-white bg-[#1A1A1A] hover:bg-[#262626] border border-[#2E2E2E] transition-colors cursor-pointer shadow-xs"
+          title="全コマ一覧（コンタクトシート）"
+        >
+          <LayoutGrid className="w-3.5 h-3.5 text-stone-400" />
+          <span>全コマ一覧</span>
+        </button>
       </div>
 
       {/* Center: Aspect Ratio Selector */}
