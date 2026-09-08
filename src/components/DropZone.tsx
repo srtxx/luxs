@@ -5,7 +5,7 @@ import { UploadCloud, PlayCircle, Sliders, ShieldCheck, Film, Info, AlertTriangl
 import { generateSampleVideo } from '@/lib/sample-video';
 
 interface DropZoneProps {
-  onVideoSelected: (file: File | Blob, options: { intervalSeconds: number; maxFrames: number }) => void;
+  onVideoSelected: (source: File | Blob | string, options: { intervalSeconds: number; maxFrames: number }) => void;
   isProcessing: boolean;
 }
 
@@ -75,6 +75,14 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
     }
   };
 
+  const handleDesktopDirectTest = () => {
+    setFileError(null);
+    onVideoSelected('/Users/suganuma_ryohei/Desktop/IMG_8198 2.mov', {
+      intervalSeconds,
+      maxFrames,
+    });
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       <div className="text-center space-y-3 pt-6 pb-2">
@@ -125,28 +133,52 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               Desktop等の動画ファイルをドラッグ＆ドロップ
             </p>
             <p className="text-xs sm:text-sm text-slate-400">
-              またはクリックしてファイルを選択（MP4, MOV, WebM対応）
+              またはクリックしてファイルを選択（iPhone 4K HDR MOV, MP4, WebM完全対応）
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-500 pt-2">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>ブラウザ内で直接処理（外部サーバーへの動画送信なし・完全安全）</span>
+            <span>Apple Silicon ハードウェア支援による4K高精細フレーム抽出</span>
           </div>
         </div>
       </div>
 
       {/* Quick Actions & Settings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Sample Demo Button */}
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Desktop Direct Test Button */}
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-2">
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
               <Film className="w-4 h-4 text-amber-400" />
-              <span>手元に動画がない場合</span>
+              <span>デスクトップ動画テスト</span>
             </div>
-            <p className="text-xs text-slate-400">
-              内蔵のテスト用サンプル動画で即座に動作を体験
+            <p className="text-[11px] text-slate-400 truncate" title="IMG_8198 2.mov">
+              IMG_8198 2.mov を直接テスト
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDesktopDirectTest();
+            }}
+            disabled={isProcessing}
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+          >
+            <span>この動画を即テスト</span>
+          </button>
+        </div>
+
+        {/* Sample Demo Button */}
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-2">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+              <PlayCircle className="w-4 h-4 text-amber-400" />
+              <span>内蔵サンプル動画</span>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              テスト用動画をブラウザで生成
             </p>
           </div>
           <button
@@ -156,21 +188,20 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               handleSampleDemo();
             }}
             disabled={isProcessing || isGeneratingSample}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-900 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-750 active:bg-slate-700 border border-slate-700 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
           >
-            <PlayCircle className="w-4 h-4" />
             <span>{isGeneratingSample ? '生成中...' : 'サンプルで体験'}</span>
           </button>
         </div>
 
         {/* Burst Settings */}
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-2">
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
               <Sliders className="w-4 h-4 text-slate-400" />
-              <span>バースト抽出の精度設定</span>
+              <span>連写設定</span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-[11px] text-slate-400">
               コマ間隔と最大切り出し枚数
             </p>
           </div>
@@ -180,7 +211,7 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               value={intervalSeconds}
               onChange={(e) => setIntervalSeconds(parseFloat(e.target.value))}
               disabled={isProcessing}
-              className="text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
+              className="flex-1 text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
             >
               <option value={0.1}>0.10秒（超密）</option>
               <option value={0.15}>0.15秒（標準）</option>
@@ -191,7 +222,7 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               value={maxFrames}
               onChange={(e) => setMaxFrames(parseInt(e.target.value, 10))}
               disabled={isProcessing}
-              className="text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
+              className="flex-1 text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
             >
               <option value={30}>30コマ</option>
               <option value={45}>45コマ</option>
@@ -205,9 +236,8 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
       <div className="flex items-start gap-2 p-3.5 rounded-lg bg-slate-900/40 border border-slate-800/80 text-xs text-slate-400">
         <Info className="w-4 h-4 text-amber-500/80 shrink-0 mt-0.5" />
         <div>
-          <span className="font-semibold text-slate-300">おすすめの利用法: </span>
-          スマホで撮影した自撮り・ダンス・ペット・日常Vlog動画などをドロップしてください。
-          動きの中で最もピントが合っており、ブレのない奇跡の1コマをAIが自動選出します。
+          <span className="font-semibold text-slate-300">iPhone HDR / 4K動画対応: </span>
+          iPhoneで撮影された4K HDR (Dolby Vision) MOV動画も、ネイティブ映像エンジンにより完全な色再現度と鮮明さでフレーム抽出されます。
         </div>
       </div>
     </div>

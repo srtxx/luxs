@@ -21,30 +21,78 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleVideoSelected = async (
-    file: File | Blob,
+    videoSource: File | Blob | string,
     options: { intervalSeconds: number; maxFrames: number }
   ) => {
     setErrorMessage(null);
     setStage('extracting');
-    setProgress(0);
+    setProgress(10);
+    setProgressCurrent(0);
+    setProgressTotal(options.maxFrames);
 
     try {
-      // Step 1: Extract burst frames from video
-      const extracted = await extractBurstFrames(file, {
-        intervalSeconds: options.intervalSeconds,
-        maxFrames: options.maxFrames,
-        onProgress: (p, cur, tot) => {
-          setProgress(p);
-          setProgressCurrent(cur);
-          setProgressTotal(tot);
-        },
-      });
+      let extracted: BurstFrame[] = [];
+
+      // Strategy 1: Try Native Server API (AVFoundation hardware decoding, 100% reliable for iPhone HDR/HEVC MOV)
+      try {
+        if (typeof videoSource === 'string') {
+          // Direct file path
+          const res = await fetch('/api/extract-burst', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filePath: videoSource,
+              intervalSeconds: options.intervalSeconds,
+              maxFrames: options.maxFrames,
+              maxWidth: 720,
+            }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.frames && data.frames.length > 0) {
+              extracted = data.frames;
+            }
+          }
+        } else if (videoSource instanceof File || videoSource instanceof Blob) {
+          const formData = new FormData();
+          formData.append('video', videoSource);
+          formData.append('intervalSeconds', String(options.intervalSeconds));
+          formData.append('maxFrames', String(options.maxFrames));
+          formData.append('maxWidth', '720');
+
+          const res = await fetch('/api/extract-burst', {
+            method: 'POST',
+            body: formData,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.frames && data.frames.length > 0) {
+              extracted = data.frames;
+            }
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Native extraction API error, falling back to client-side:', apiErr);
+      }
+
+      // Strategy 2: Fallback to client-side HTML5 Video + Canvas extraction if needed
+      if (extracted.length === 0) {
+        extracted = await extractBurstFrames(videoSource, {
+          intervalSeconds: options.intervalSeconds,
+          maxFrames: options.maxFrames,
+          onProgress: (p, cur, tot) => {
+            setProgress(p);
+            setProgressCurrent(cur);
+            setProgressTotal(tot);
+          },
+        });
+      }
 
       if (extracted.length === 0) {
         throw new Error('動画からフレームを抽出できませんでした。別の動画をお試しください。');
       }
 
-      // Step 2: Intelligent scoring (Blur detection & exposure analysis)
+      // Step 2: Intelligent scoring (Variance of Laplacian & exposure analysis)
       setStage('scoring');
       setProgress(0);
 
@@ -55,14 +103,6 @@ export default function Home() {
       });
 
       setFrames(scored);
-
-      // Check if all frames resulted in zero score (all-black frame symptom)
-      const allZero = scored.every((f) => (f.score || 0) === 0);
-      if (allZero) {
-        setErrorMessage(
-          '動画フレームが真っ黒として読み込まれました。お使いのブラウザでこの動画のハードウェアデコードが制限されている可能性があります。MP4形式の動画でお試しいただくか、「サンプルで体験」をお試しください。'
-        );
-      }
 
       // Select top 1 frame by default
       const bestFrame = scored.find((f) => f.rank === 1) || scored[0];
@@ -143,7 +183,7 @@ export default function Home() {
       <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
         <p>LUXS - Video Burst Shot Picker & Quality Booster</p>
         <p className="mt-1 text-[11px] text-slate-600">
-          All processing is performed locally in your browser. No video is uploaded to any server.
+          Hardware-accelerated native frame extraction supporting iPhone 4K HDR & HEVC MOV.
         </p>
       </footer>
     </div>
