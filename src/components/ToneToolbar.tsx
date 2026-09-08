@@ -174,7 +174,7 @@ export const ToneToolbar: React.FC<ToneToolbarProps> = ({
                 key={tone.id}
                 type="button"
                 onClick={() => handleToneClick(tone.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 border ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 border tactile-btn ${
                   isSelected
                     ? 'bg-[var(--surface)] text-[var(--foreground)] border-[var(--accent-primary)] shadow-xs ring-1 ring-[var(--accent-primary)]/30'
                     : 'bg-[var(--surface-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] border-[var(--surface-border)]'
@@ -192,7 +192,7 @@ export const ToneToolbar: React.FC<ToneToolbarProps> = ({
         <button
           type="button"
           onClick={onOpenPrintModal}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] transition-colors cursor-pointer shrink-0 shadow-xs"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shrink-0 shadow-xs"
           title="アクリルブロックやカードとしてプリント注文"
         >
           <Package className="w-3.5 h-3.5 opacity-70" />

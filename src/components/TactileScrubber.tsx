@@ -132,9 +132,15 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
             </span>
           )}
         </div>
-        <span className="text-[11px] font-mono text-[var(--foreground-muted)] font-medium">
-          {currentIndex + 1} / {totalFrames}
-        </span>
+        <div className="flex items-center gap-2.5">
+          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-[var(--foreground-muted)]/80">
+            <span className="kbd-cap">←</span>
+            <span className="kbd-cap">→</span>
+          </span>
+          <span className="text-[11px] font-mono text-[var(--foreground-muted)] font-medium">
+            {currentIndex + 1} / {totalFrames}
+          </span>
+        </div>
       </div>
 
       {/* Main Scrubber Film Track */}

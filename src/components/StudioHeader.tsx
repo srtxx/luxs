@@ -4,6 +4,7 @@ import React from 'react';
 import { AspectRatio } from './StudioCanvas';
 import { Download, Archive, X, LayoutGrid, Copy, Sun, Palette, Moon, Heart, Grid2X2, Repeat } from 'lucide-react';
 import { triggerHapticTick } from '@/lib/haptics';
+import { LuxsBrand } from './LuxsBrand';
 
 export type AppTheme = 'luminous' | 'blush' | 'noir';
 
@@ -23,6 +24,9 @@ interface StudioHeaderProps {
   theme: AppTheme;
   onSelectTheme: (theme: AppTheme) => void;
   favoritedCount: number;
+  currentTimestamp?: number;
+  currentIndex?: number;
+  totalFrames?: number;
 }
 
 const RATIOS: { id: AspectRatio; label: string }[] = [
@@ -48,32 +52,57 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   theme,
   onSelectTheme,
   favoritedCount,
+  currentTimestamp,
+  currentIndex,
+  totalFrames,
 }) => {
   return (
-    <header className="w-full h-14 px-3 sm:px-6 flex items-center justify-between border-b border-[var(--surface-border)] bg-[var(--surface)] z-30 select-none transition-colors duration-200">
-      {/* Left: Cancel & Contact Sheet Trigger & Favorites Badge */}
+    <header className="w-full h-14 px-3 sm:px-5 flex items-center justify-between border-b border-[var(--surface-border)] bg-[var(--surface)] z-30 select-none transition-colors duration-200 shrink-0">
+      {/* Left: Brand + Exit + Instrument Metrology Readout */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Brand Monogram */}
+        <LuxsBrand compact={true} showStatus={false} />
+
+        <div className="h-4 w-px bg-[var(--surface-border)]" />
+
+        {/* Cancel / Return to Entry */}
         <button
           type="button"
           onClick={onCancel}
-          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
+          className="flex items-center gap-1 py-1.5 px-2 rounded-lg text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] tactile-btn cursor-pointer"
           title="Esc"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">閉じる</span>
         </button>
 
-        <div className="h-4 w-px bg-[var(--surface-border)]" />
+        {/* Precision Metrology Pill (FRM & Timestamp) */}
+        {currentIndex !== undefined && totalFrames !== undefined && (
+          <div className="hidden md:flex items-center gap-2 py-1 px-2.5 rounded-lg bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-[11px] font-mono text-[var(--foreground-muted)] tabular-numbers">
+            <span className="text-[var(--foreground)] font-medium">
+              FRM {currentIndex + 1}
+              <span className="opacity-40">/{totalFrames}</span>
+            </span>
+            {currentTimestamp !== undefined && (
+              <>
+                <span className="opacity-30">|</span>
+                <span>{currentTimestamp.toFixed(2)}s</span>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="hidden sm:block h-4 w-px bg-[var(--surface-border)]" />
 
         {/* Contact Sheet (All Frames Grid) Button */}
         <button
           type="button"
           onClick={onOpenContactSheet}
-          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] transition-colors cursor-pointer shadow-2xs"
+          className="flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
           title="全コマ一覧（コンタクトシート）"
         >
           <LayoutGrid className="w-3.5 h-3.5 opacity-70" />
-          <span>全コマ一覧</span>
+          <span className="hidden sm:inline">全コマ一覧</span>
         </button>
 
         {/* Favorite Counter Pill */}
@@ -81,7 +110,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           <button
             type="button"
             onClick={onOpenContactSheet}
-            className="flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[11px] font-medium text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] border border-[var(--accent-primary)]/30 transition-colors cursor-pointer shadow-2xs"
+            className="flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[11px] font-medium text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] border border-[var(--accent-primary)]/30 tactile-btn cursor-pointer shadow-2xs"
             title="保存候補一覧を表示"
           >
             <Heart className="w-3 h-3 fill-current" />
@@ -93,22 +122,22 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
         <button
           type="button"
           onClick={onOpenCollage}
-          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] transition-colors cursor-pointer shadow-2xs"
+          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
           title="お気に入りコマで組写真（コラージュ）を作成"
         >
           <Grid2X2 className="w-3.5 h-3.5 opacity-70" />
-          <span className="hidden md:inline">組写真</span>
+          <span className="hidden xl:inline">組写真</span>
         </button>
 
         {/* Live Loop (ループ動画) Button */}
         <button
           type="button"
           onClick={onOpenLiveLoop}
-          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] transition-colors cursor-pointer shadow-2xs"
+          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
           title="Live Photo風ループ動画を書き出し"
         >
           <Repeat className="w-3.5 h-3.5 opacity-70" />
-          <span className="hidden md:inline">ループ動画</span>
+          <span className="hidden xl:inline">ループ動画</span>
         </button>
       </div>
 
@@ -194,7 +223,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           type="button"
           onClick={onCopyImage}
           disabled={isCopying}
-          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium text-[var(--foreground)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
+          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium text-[var(--foreground)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs disabled:opacity-50"
           title="クリップボードに画像をコピー"
         >
           <Copy className="w-3.5 h-3.5 opacity-70" />
@@ -206,7 +235,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           type="button"
           onClick={onSaveAllZip}
           disabled={isSavingAll}
-          className="p-1.5 rounded-lg text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] tactile-btn cursor-pointer"
           title="全コマ一括保存（ZIP）"
         >
           <Archive className="w-4 h-4" />
@@ -217,7 +246,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           type="button"
           onClick={onSavePng}
           disabled={isSaving}
-          className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-lg text-xs font-semibold text-white bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+          className="flex items-center gap-1.5 py-1.5 px-3.5 rounded-lg text-xs font-semibold text-white bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] tactile-btn shadow-sm cursor-pointer disabled:opacity-50"
           title="Enter"
         >
           <Download className="w-3.5 h-3.5 text-white" />
@@ -227,3 +256,4 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
     </header>
   );
 };
+

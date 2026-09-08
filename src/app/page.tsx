@@ -362,6 +362,9 @@ export default function Home() {
             theme={theme}
             onSelectTheme={handleSelectTheme}
             favoritedCount={favoritedIds.length}
+            currentTimestamp={currentFrame.timestamp}
+            currentIndex={currentIndex}
+            totalFrames={frames.length}
           />
 
           {/* Center Stage: Photo Canvas */}

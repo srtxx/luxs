@@ -132,6 +132,12 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         className={`relative max-h-full max-w-full flex items-center justify-center rounded-2xl overflow-hidden studio-elevation bg-[var(--canvas-bg)] border border-[var(--surface-border)] ring-1 ring-black/5 transition-all duration-150 ${getAspectClass()}`}
         style={{ touchAction: 'none' }}
       >
+        {/* Viewfinder Corner Reticles (Precision optical instrument craft) */}
+        <div className="absolute top-2.5 left-2.5 w-3 h-3 border-t border-l border-white/40 pointer-events-none drop-shadow-xs z-10" />
+        <div className="absolute top-2.5 right-2.5 w-3 h-3 border-t border-r border-white/40 pointer-events-none drop-shadow-xs z-10" />
+        <div className="absolute bottom-2.5 left-2.5 w-3 h-3 border-b border-l border-white/40 pointer-events-none drop-shadow-xs z-10" />
+        <div className="absolute bottom-2.5 right-2.5 w-3 h-3 border-b border-r border-white/40 pointer-events-none drop-shadow-xs z-10" />
+
         {/* Base Layer: Original image (or under split) */}
         <img
           src={frame.dataUrl}
@@ -270,7 +276,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
                 setIsSplitMode(!isSplitMode);
                 triggerHapticTick(1100, 0.03);
               }}
-              className={`p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-xs ${
+              className={`p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-xs tactile-btn ${
                 isSplitMode
                   ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-sm'
                   : 'bg-[var(--surface)]/80 text-[var(--foreground)] border-[var(--surface-border)] hover:bg-[var(--surface)]'
@@ -289,7 +295,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               setIsSnsOverlay(!isSnsOverlay);
               triggerHapticTick(1100, 0.03);
             }}
-            className={`p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-xs ${
+            className={`p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-xs tactile-btn ${
               isSnsOverlay
                 ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-sm'
                 : 'bg-[var(--surface)]/80 text-[var(--foreground)] border-[var(--surface-border)] hover:bg-[var(--surface)]'
@@ -307,7 +313,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               setIsLoupe(!isLoupe);
               triggerHapticTick(1100, 0.03);
             }}
-            className={`p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-xs ${
+            className={`p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-xs tactile-btn ${
               isLoupe
                 ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-sm'
                 : 'bg-[var(--surface)]/80 text-[var(--foreground)] border-[var(--surface-border)] hover:bg-[var(--surface)]'
@@ -324,7 +330,7 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
               e.stopPropagation();
               onToggleFavorite();
             }}
-            className={`p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-xs ${
+            className={`p-2 rounded-full backdrop-blur-md border transition-all cursor-pointer shadow-xs tactile-btn ${
               isFavorited
                 ? 'bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-sm'
                 : 'bg-[var(--surface)]/80 text-[var(--foreground)] border-[var(--surface-border)] hover:bg-[var(--surface)]'
