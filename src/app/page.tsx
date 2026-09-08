@@ -1,54 +1,50 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Header, ActiveView } from '@/components/Header';
-import { DropZone } from '@/components/DropZone';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { EmptyVoid } from '@/components/EmptyVoid';
 import { ProcessingProgress } from '@/components/ProcessingProgress';
-import { HeroCanvas } from '@/components/HeroCanvas';
-import { TactileRibbon } from '@/components/TactileRibbon';
-import { CuratedMomentsView } from '@/components/CuratedMomentsView';
-import { CompareView } from '@/components/CompareView';
-import { AuraFinishesBar, AuraStyle, AspectRatio, AURA_STYLES } from '@/components/AuraFinishesBar';
-import { ProModal } from '@/components/ProModal';
+import { StudioHeader } from '@/components/StudioHeader';
+import { StudioCanvas, AspectRatio } from '@/components/StudioCanvas';
+import { TactileScrubber } from '@/components/TactileScrubber';
+import { ToneToolbar, TonePreset, TONE_PRESETS } from '@/components/ToneToolbar';
 import { PrintOrderModal } from '@/components/PrintOrderModal';
+import { ProModal } from '@/components/ProModal';
 import { extractBurstFrames, BurstFrame } from '@/lib/video-burst';
 import { scoreAllFrames } from '@/lib/image-scoring';
-import { enhanceImage, EnhancementSettings } from '@/lib/image-enhancer';
+import { enhanceImage } from '@/lib/image-enhancer';
 import { exportCroppedPng, downloadFramesZip } from '@/lib/crop-export';
-import { AlertCircle } from 'lucide-react';
-
-const AURA_TITLES_MAP: Record<number, string> = {
-  1: '奇跡の瞬間 #1: 最高の笑顔',
-  2: '奇跡の瞬間 #2: 澄んだ眼差し',
-  3: '奇跡の瞬間 #3: 柔らかな光',
-};
+import { triggerHapticTick } from '@/lib/haptics';
 
 export default function Home() {
   const [stage, setStage] = useState<'idle' | 'extracting' | 'scoring' | 'ready'>('idle');
-  const [activeView, setActiveView] = useState<ActiveView>('curated');
   const [progress, setProgress] = useState(0);
   const [progressCurrent, setProgressCurrent] = useState(0);
   const [progressTotal, setProgressTotal] = useState(0);
   const [frames, setFrames] = useState<BurstFrame[]>([]);
-  const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [favoritedIds, setFavoritedIds] = useState<string[]>([]);
-  const [currentStyle, setCurrentStyle] = useState<AuraStyle>('natural');
+  const [currentTone, setCurrentTone] = useState<TonePreset>('clear');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('original');
-  const [fineTuneSettings, setFineTuneSettings] = useState<EnhancementSettings>(
-    AURA_STYLES[0].settings
-  );
   const [enhancedUrl, setEnhancedUrl] = useState<string | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
-  const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingAll, setIsSavingAll] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
 
+  // Indices of top recommended frames (Rank 1, 2, 3)
+  const recommendedIndices = useMemo(() => {
+    return frames
+      .map((f, idx) => ({ frame: f, index: idx }))
+      .filter((item) => item.frame.rank && item.frame.rank <= 3)
+      .sort((a, b) => (a.frame.rank || 0) - (b.frame.rank || 0))
+      .map((item) => item.index);
+  }, [frames]);
+
+  // Handle video extraction and scoring
   const handleVideoSelected = async (
     videoSource: File | Blob | string,
     options: { intervalSeconds: number; maxFrames: number }
   ) => {
-    setErrorMessage(null);
     setStage('extracting');
     setProgress(10);
     setProgressCurrent(0);
@@ -57,7 +53,7 @@ export default function Home() {
     try {
       let extracted: BurstFrame[] = [];
 
-      // Strategy 1: Native Server API (AVFoundation hardware decoding, 100% reliable for iPhone 4K HDR/HEVC MOV)
+      // Strategy 1: Native server API (AVFoundation hardware decoding for 4K HDR MOV)
       try {
         if (typeof videoSource === 'string') {
           const res = await fetch('/api/extract-burst', {
@@ -94,8 +90,8 @@ export default function Home() {
             }
           }
         }
-      } catch (apiErr) {
-        console.warn('Native extraction API fallback to client-side:', apiErr);
+      } catch {
+        // Fallback silently to client-side
       }
 
       // Strategy 2: Fallback to client-side HTML5 Video + Canvas extraction
@@ -112,10 +108,10 @@ export default function Home() {
       }
 
       if (extracted.length === 0) {
-        throw new Error('動画からフレームを抽出できませんでした。別の動画をお試しください。');
+        throw new Error('フレームを抽出できませんでした。');
       }
 
-      // Step 2: Intelligent scoring (Variance of Laplacian & exposure analysis)
+      // Step 2: Intelligent scoring
       setStage('scoring');
       setProgress(0);
 
@@ -128,243 +124,189 @@ export default function Home() {
       setFrames(scored);
 
       // Select top 1 frame by default
-      const bestFrame = scored.find((f) => f.rank === 1) || scored[0];
-      setSelectedFrameId(bestFrame.id);
-      setFavoritedIds([bestFrame.id]);
-      setActiveView('curated'); // Default to curated 3-moments view
+      const bestIdx = scored.findIndex((f) => f.rank === 1);
+      const initialIdx = bestIdx !== -1 ? bestIdx : 0;
+      setCurrentIndex(initialIdx);
+      if (scored[initialIdx]) {
+        setFavoritedIds([scored[initialIdx].id]);
+      }
       setStage('ready');
-    } catch (err: unknown) {
-      console.error('Processing error:', err);
-      setErrorMessage(
-        err instanceof Error
-          ? err.message
-          : '動画の処理中にエラーが発生しました。対応形式（MP4, MOV, WebM）をご確認ください。'
-      );
+      triggerHapticTick(1200, 0.05);
+    } catch {
       setStage('idle');
     }
   };
+
+  const currentFrame = frames[currentIndex];
+
+  // Re-run image enhancement whenever current frame or tone changes
+  const runEnhancement = useCallback(async () => {
+    if (!currentFrame) return;
+
+    const matchedTone = TONE_PRESETS.find((t) => t.id === currentTone);
+    if (!matchedTone || !matchedTone.settings) {
+      setEnhancedUrl(null); // Original, no filter
+      return;
+    }
+
+    try {
+      const res = await enhanceImage(currentFrame.dataUrl, matchedTone.settings);
+      setEnhancedUrl(res.dataUrl);
+    } catch {
+      setEnhancedUrl(null);
+    }
+  }, [currentFrame, currentTone]);
+
+  useEffect(() => {
+    if (stage === 'ready' && currentFrame) {
+      const timer = setTimeout(() => {
+        runEnhancement();
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [stage, currentFrame, runEnhancement]);
 
   const handleToggleFavorite = (frameId: string) => {
     setFavoritedIds((prev) =>
       prev.includes(frameId) ? prev.filter((id) => id !== frameId) : [...prev, frameId]
     );
+    triggerHapticTick(1400, 0.04);
   };
 
-  const handleReset = () => {
+  const handleCancel = useCallback(() => {
     setStage('idle');
     setFrames([]);
-    setSelectedFrameId(null);
+    setCurrentIndex(0);
     setFavoritedIds([]);
     setEnhancedUrl(null);
-    setActiveView('curated');
-    setErrorMessage(null);
-  };
+  }, []);
 
-  const selectedFrame = frames.find((f) => f.id === selectedFrameId) || frames[0];
-
-  // Style change handler
-  const handleSelectStyle = (styleId: AuraStyle) => {
-    setCurrentStyle(styleId);
-    const matched = AURA_STYLES.find((s) => s.id === styleId);
-    if (matched) {
-      setFineTuneSettings({ ...matched.settings });
-    }
-  };
-
-  // Re-run image enhancement whenever selected frame or fine-tune settings change
-  const runEnhancement = useCallback(async () => {
-    if (!selectedFrame) return;
+  // Save current frame
+  const handleSavePng = useCallback(async () => {
+    if (!currentFrame) return;
+    setIsSaving(true);
     try {
-      const res = await enhanceImage(selectedFrame.dataUrl, fineTuneSettings);
-      setEnhancedUrl(res.dataUrl);
-    } catch (err) {
-      console.error('Enhancement error:', err);
-    }
-  }, [selectedFrame, fineTuneSettings]);
-
-  useEffect(() => {
-    if (stage === 'ready' && selectedFrame) {
-      const timer = setTimeout(() => {
-        runEnhancement();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [stage, selectedFrame, runEnhancement]);
-
-  // Export current frame
-  const handleSavePng = async () => {
-    if (!selectedFrame) return;
-    setIsDownloading(true);
-    try {
-      const url = enhancedUrl || selectedFrame.dataUrl;
-      const timeStr = selectedFrame.timestamp.toFixed(2).replace('.', '_');
-      const filename = `luxs_aura_${timeStr}s_${currentStyle}.png`;
+      const url = enhancedUrl || currentFrame.dataUrl;
+      const timeStr = currentFrame.timestamp.toFixed(2).replace('.', '_');
+      const filename = `luxs_photo_${timeStr}s.png`;
       await exportCroppedPng(url, aspectRatio, filename);
-    } catch (err) {
-      console.error('Failed to export PNG:', err);
+      triggerHapticTick(1500, 0.06);
+    } catch {
+      // Export failed
     } finally {
-      setIsDownloading(false);
+      setIsSaving(false);
     }
-  };
+  }, [currentFrame, enhancedUrl, aspectRatio]);
 
-  // Batch export curated top 3 frames
-  const handleSaveCuratedBatch = async () => {
-    const topFrames = frames
-      .filter((f) => f.rank && f.rank <= 3)
-      .sort((a, b) => (a.rank || 0) - (b.rank || 0));
-
-    const exportTargets = topFrames.length > 0 ? topFrames : frames.slice(0, 3);
-    await downloadFramesZip(exportTargets, 'luxs_curated_aura_moments.zip');
-  };
-
-  // Full archive export
-  const handleSaveAllZip = async () => {
+  // Save all frames as ZIP
+  const handleSaveAllZip = useCallback(async () => {
     if (frames.length === 0) return;
-    setIsDownloadingAll(true);
+    setIsSavingAll(true);
     try {
-      await downloadFramesZip(frames, 'luxs_all_moments_archive.zip');
-    } catch (err) {
-      console.error('Failed to export ZIP:', err);
+      await downloadFramesZip(frames, 'luxs_burst_frames.zip');
+      triggerHapticTick(1500, 0.06);
+    } catch {
+      // ZIP failed
     } finally {
-      setIsDownloadingAll(false);
+      setIsSavingAll(false);
     }
-  };
+  }, [frames]);
 
-  const currentAuraTitle =
-    selectedFrame && selectedFrame.rank && selectedFrame.rank <= 3
-      ? AURA_TITLES_MAP[selectedFrame.rank]
-      : undefined;
+  // Keyboard global shortcuts
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (stage !== 'ready') return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.key === 'Escape') {
+        handleCancel();
+      } else if (e.key === 'Enter') {
+        handleSavePng();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [stage, handleCancel, handleSavePng]);
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4] text-stone-900 flex flex-col font-sans">
-      <Header
-        hasVideo={stage === 'ready'}
-        activeView={activeView}
-        onSelectView={setActiveView}
-        onReset={handleReset}
-        onOpenProModal={() => setIsProModalOpen(true)}
-      />
+    <main className="h-screen max-h-screen w-screen overflow-hidden flex flex-col bg-[#0C0C0C] text-[#F5F5F5] select-none">
+      {/* Stage 1: Entrance */}
+      {stage === 'idle' && (
+        <EmptyVoid
+          onVideoSelected={handleVideoSelected}
+          isProcessing={false}
+        />
+      )}
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col items-center">
-        {/* Error notification banner */}
-        {errorMessage && (
-          <div className="w-full max-w-xl mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-3 shadow-sm animate-fadeIn">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-            <div className="flex-1">{errorMessage}</div>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="text-rose-500 hover:text-rose-700 text-xs font-semibold cursor-pointer"
-            >
-              閉じる
-            </button>
-          </div>
-        )}
+      {/* Stage 2 & 3: Extraction & Scoring */}
+      {(stage === 'extracting' || stage === 'scoring') && (
+        <ProcessingProgress
+          stage={stage}
+          progress={progress}
+          current={progressCurrent}
+          total={progressTotal}
+        />
+      )}
 
-        {/* Stage 1: Entrance / DropZone */}
-        {stage === 'idle' && (
-          <DropZone
-            onVideoSelected={handleVideoSelected}
-            isProcessing={false}
+      {/* Stage 4: Studio Workbench (Non-scrolling 100dvh) */}
+      {stage === 'ready' && currentFrame && (
+        <div className="h-full w-full flex flex-col overflow-hidden animate-fadeIn">
+          {/* Top Bar */}
+          <StudioHeader
+            aspectRatio={aspectRatio}
+            onSelectAspectRatio={setAspectRatio}
+            onCancel={handleCancel}
+            onSavePng={handleSavePng}
+            onSaveAllZip={handleSaveAllZip}
+            isSaving={isSaving}
+            isSavingAll={isSavingAll}
           />
-        )}
 
-        {/* Stage 2 & 3: Extraction & Scoring Progress */}
-        {(stage === 'extracting' || stage === 'scoring') && (
-          <ProcessingProgress
-            stage={stage}
-            progress={progress}
-            current={progressCurrent}
-            total={progressTotal}
-          />
-        )}
-
-        {/* Stage 4: Atelier Playground */}
-        {stage === 'ready' && selectedFrame && (
-          <div className="w-full flex flex-col items-center space-y-6 animate-fadeIn">
-            {/* View 1: Curated 3 Moments */}
-            {activeView === 'curated' && (
-              <CuratedMomentsView
-                frames={frames}
-                favoritedIds={favoritedIds}
-                onToggleFavorite={handleToggleFavorite}
-                onSelectFrameAndOpenAtelier={(frameId) => {
-                  setSelectedFrameId(frameId);
-                  setActiveView('atelier');
-                }}
-                onSaveCuratedBatch={handleSaveCuratedBatch}
-                onGoToTimeline={() => setActiveView('atelier')}
-              />
-            )}
-
-            {/* View 2: Atelier (Hero Canvas + Tactile Ribbon + Finishes Bar) */}
-            {activeView === 'atelier' && (
-              <div className="w-full flex flex-col items-center space-y-5">
-                {/* Hero Canvas */}
-                <HeroCanvas
-                  frame={selectedFrame}
-                  enhancedUrl={enhancedUrl}
-                  isFavorited={favoritedIds.includes(selectedFrame.id)}
-                  onToggleFavorite={() => handleToggleFavorite(selectedFrame.id)}
-                  aspectRatio={aspectRatio}
-                  auraTitle={currentAuraTitle}
-                />
-
-                {/* Tactile Scrubber Ribbon */}
-                <TactileRibbon
-                  frames={frames}
-                  selectedFrameId={selectedFrame.id}
-                  onSelectFrame={setSelectedFrameId}
-                  favoritedIds={favoritedIds}
-                />
-
-                {/* Finishes & Actions Floating Dock */}
-                <AuraFinishesBar
-                  currentStyle={currentStyle}
-                  onSelectStyle={handleSelectStyle}
-                  aspectRatio={aspectRatio}
-                  onSelectAspectRatio={setAspectRatio}
-                  onSavePng={handleSavePng}
-                  onOpenPrintModal={() => setIsPrintModalOpen(true)}
-                  onSaveAllZip={handleSaveAllZip}
-                  isDownloading={isDownloading}
-                  isDownloadingAll={isDownloadingAll}
-                  fineTuneSettings={fineTuneSettings}
-                  onChangeFineTune={setFineTuneSettings}
-                />
-              </div>
-            )}
-
-            {/* View 3: Side-by-Side Comparison */}
-            {activeView === 'compare' && (
-              <CompareView
-                frames={frames}
-                favoritedIds={favoritedIds}
-                initialFrameAId={selectedFrame.id}
-                onSelectWinningFrame={(winningId) => {
-                  setSelectedFrameId(winningId);
-                  setActiveView('atelier');
-                }}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            )}
+          {/* Center Stage: Photo Canvas */}
+          <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden">
+            <StudioCanvas
+              frame={currentFrame}
+              enhancedUrl={enhancedUrl}
+              aspectRatio={aspectRatio}
+              isFavorited={favoritedIds.includes(currentFrame.id)}
+              onToggleFavorite={() => handleToggleFavorite(currentFrame.id)}
+            />
           </div>
-        )}
-      </main>
 
-      {/* Pro Subscription Modal */}
+          {/* Bottom Console: Scrubber + Tone Toolbar */}
+          <div className="w-full max-w-3xl mx-auto px-4 pb-4 space-y-2 shrink-0">
+            <TactileScrubber
+              frames={frames}
+              currentIndex={currentIndex}
+              onIndexChange={setCurrentIndex}
+              recommendedIndices={recommendedIndices}
+              favoritedIds={favoritedIds}
+            />
+
+            <ToneToolbar
+              currentTone={currentTone}
+              onSelectTone={setCurrentTone}
+              onOpenPrintModal={() => setIsPrintModalOpen(true)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Physical Print Goods Modal */}
+      {currentFrame && (
+        <PrintOrderModal
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          frame={currentFrame}
+        />
+      )}
+
+      {/* Pro Modal */}
       <ProModal
         isOpen={isProModalOpen}
         onClose={() => setIsProModalOpen(false)}
       />
-
-      {/* AURA PRINT Physical Goods Modal */}
-      {selectedFrame && (
-        <PrintOrderModal
-          isOpen={isPrintModalOpen}
-          onClose={() => setIsPrintModalOpen(false)}
-          frame={selectedFrame}
-        />
-      )}
-    </div>
+    </main>
   );
 }

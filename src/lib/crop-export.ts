@@ -1,9 +1,10 @@
 import JSZip from 'jszip';
 import { BurstFrame } from './video-burst';
-import { AspectRatio } from '@/components/AuraFinishesBar';
+
+export type AspectRatio = 'original' | '4:5' | '1:1' | '9:16';
 
 /**
- * Crops and exports an image data URL with aspect ratio and watermark.
+ * Crops and exports an image data URL with aspect ratio.
  */
 export async function exportCroppedPng(
   imageUrl: string,
@@ -75,15 +76,6 @@ export async function exportCroppedPng(
     canvas.height
   );
 
-  // Subtle luxury watermark
-  ctx.save();
-  ctx.font = 'bold 14px Didot, serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-  ctx.shadowBlur = 4;
-  ctx.fillText('LUXS - AURA', canvas.width - 120, canvas.height - 20);
-  ctx.restore();
-
   const downloadUrl = canvas.toDataURL('image/png');
   const link = document.createElement('a');
   link.download = filename;
@@ -107,7 +99,7 @@ export async function downloadFramesZip(
   for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
     const base64Data = frame.dataUrl.replace(/^data:image\/(png|jpeg);base64,/, '');
-    const rankPrefix = frame.rank ? `aura_rank${frame.rank}_` : '';
+    const rankPrefix = frame.rank && frame.rank <= 3 ? `best_${frame.rank}_` : '';
     const name = `${rankPrefix}shot_${String(i + 1).padStart(3, '0')}_${frame.timestamp.toFixed(2)}s.png`;
     folder.file(name, base64Data, { base64: true });
 

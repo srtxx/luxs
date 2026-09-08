@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'LUXS - 一瞬に宿るアウラを、永遠の1枚に。',
-  description:
-    '動画の連続する時間の中から、あなただけの最も美しい奇跡の瞬間（アウラ）を救い出す。AI鮮明度解析と高精細レタッチによる新しいポートレート体験。',
+  title: 'LUXS - 動画からベストショットを高画質抽出',
+  description: '動画からブレのない美しい瞬間を選び出し、高画質写真として保存するポートレートツール。',
 };
 
 export default function RootLayout({
@@ -13,8 +12,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className="h-full antialiased light">
-      <body className="min-h-full flex flex-col bg-[#F8F7F4] text-stone-900">{children}</body>
+    <html lang="ja" className="h-full overflow-hidden dark">
+      <body className="h-full w-full overflow-hidden bg-[#0C0C0C] text-[#F5F5F5] antialiased">
+        {children}
+      </body>
     </html>
   );
 }

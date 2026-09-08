@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, Package, Truck } from 'lucide-react';
+import { X, Package, Check } from 'lucide-react';
 import { BurstFrame } from '@/lib/video-burst';
 
 interface PrintOrderModalProps {
@@ -15,7 +15,7 @@ type ProductType = 'acrylic' | 'card' | 'frame';
 interface ProductInfo {
   id: ProductType;
   title: string;
-  subtitle: string;
+  specs: string;
   price: number;
   description: string;
 }
@@ -23,24 +23,24 @@ interface ProductInfo {
 const PRODUCTS: ProductInfo[] = [
   {
     id: 'acrylic',
-    title: '自立型アクリルアートブロック',
-    subtitle: '厚さ20mm 高透明度アクリル仕上げ',
+    title: 'アクリルブロック',
+    specs: '厚さ20mm 高透明度アクリル',
     price: 3800,
-    description: '光を受けると写真が浮かび上がるような透明感。デスクや部屋の棚にそのまま飾れる重厚なプレミアムインテリア。',
+    description: 'デスクや本棚に自立して飾れる重厚感のある高透明アクリル仕上げ。',
   },
   {
     id: 'card',
-    title: 'ポラロイド風・高精細カード (3枚セット)',
-    subtitle: '上質マットファインペーパー仕様',
+    title: 'スクエアカード (3枚組)',
+    specs: '高級マットファインペーパー',
     price: 1200,
-    description: 'スマホケースに挟んだり、手帳にコレクションできる上品なポラロイド調デザイン。選んだコマの前後の表情も合わせて3枚お届け。',
+    description: 'スマホケースに挟んだり手帳に挟めるコンパクトなスクエアカード。',
   },
   {
     id: 'frame',
-    title: '銀塩ファインアート・木製額装プリント',
-    subtitle: '天然無垢木フレーム ＋ 高級マット台紙',
+    title: '天然木額装プリント',
+    specs: '無垢木製フレーム + マット台紙',
     price: 6800,
-    description: '美術館基準の最高品質プリント。天然木の温もりと額装マットが、奇跡の1枚を生涯色褪せない芸術品へと仕立てます。',
+    description: '美術館基準の長期保存性に優れた銀塩ファインアート額装。',
   },
 ];
 
@@ -63,193 +63,152 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
     setTimeout(() => {
       setIsOrdered(false);
       onClose();
-      alert('ご注文予約を受け付けました。（プロトタイプ環境のため実際の決済・課金は行われません）');
-    }, 1200);
+      alert('ご注文予約を受け付けました。（プロトタイプ環境のため決済は行われません）');
+    }, 1000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-stone-200 overflow-hidden text-stone-900 max-h-[92vh] flex flex-col">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-20 p-2 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Modal Header */}
-        <div className="pt-6 pb-4 px-6 sm:px-8 border-b border-stone-100 bg-gradient-to-b from-stone-50 to-white">
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">
-            <Package className="w-4 h-4 text-amber-600" />
-            <span>AURA PRINT - 物質化サービス</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn select-none">
+      <div className="relative w-full max-w-xl bg-[#141414] rounded-2xl border border-[#282828] shadow-2xl text-stone-100 overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#242424]">
+          <div className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-stone-400" />
+            <h2 className="text-sm font-semibold text-white">プリント注文</h2>
           </div>
-          <h2 className="font-serif-brand text-2xl font-bold tracking-wide text-stone-900">
-            この奇跡の1瞬を、一生触れられる形に。
-          </h2>
-          <p className="text-xs text-stone-500 mt-0.5">
-            画面のデータを超えて、光と質量を持った唯一無二の物質として手元に残します。
-          </p>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md text-stone-400 hover:text-white hover:bg-[#222222] transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 sm:px-8 space-y-6">
-          {/* Product Type Selector Tabs */}
-          <div className="grid grid-cols-3 gap-2.5 p-1 bg-stone-100 rounded-2xl">
+        {/* Content */}
+        <div className="p-6 space-y-5 overflow-y-auto">
+          {/* Product Tabs */}
+          <div className="grid grid-cols-3 gap-2 bg-[#1C1C1C] p-1 rounded-xl border border-[#282828]">
             {PRODUCTS.map((p) => (
               <button
                 key={p.id}
                 onClick={() => setSelectedProduct(p.id)}
-                className={`py-2.5 px-2 rounded-xl text-center transition-all cursor-pointer ${
+                className={`py-2 px-2 rounded-lg text-center transition-colors cursor-pointer ${
                   selectedProduct === p.id
-                    ? 'bg-white text-stone-900 shadow-xs font-bold border border-stone-200/80'
-                    : 'text-stone-500 hover:text-stone-800'
+                    ? 'bg-[#2A2A2A] text-white font-medium shadow-xs'
+                    : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
-                <div className="text-xs truncate">{p.title.split(' (')[0]}</div>
-                <div className="text-[11px] font-mono text-amber-800 mt-0.5 font-bold">
+                <div className="text-xs truncate">{p.title}</div>
+                <div className="text-[11px] font-mono text-stone-300 mt-0.5 tabular-numbers">
                   ¥{p.price.toLocaleString()}
                 </div>
               </button>
             ))}
           </div>
 
-          {/* Realistic Product Mockup Preview */}
-          <div className="relative w-full h-64 sm:h-72 bg-gradient-to-b from-stone-100 to-stone-200/70 rounded-2xl flex items-center justify-center p-6 overflow-hidden border border-stone-200/80 shadow-inner">
-            {/* Acrylic Block Mockup */}
+          {/* Visual Mockup Preview */}
+          <div className="relative w-full h-56 bg-[#0A0A0A] rounded-xl flex items-center justify-center p-4 border border-[#222222] overflow-hidden">
             {selectedProduct === 'acrylic' && (
-              <div className="relative group transition-transform duration-300 hover:scale-105">
-                <div className="relative w-40 sm:w-48 aspect-3/4 rounded-xl overflow-hidden shadow-2xl border-4 border-white/60 ring-8 ring-black/5">
-                  <img
-                    src={frame.dataUrl}
-                    alt="Acrylic Preview"
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Glass Reflection Highlight */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/25 to-white/40 pointer-events-none" />
-                  <div className="absolute bottom-2 right-2 text-[9px] font-serif-brand font-bold text-white/70 tracking-widest pointer-events-none">
-                    LUXS
-                  </div>
-                </div>
-                {/* 3D Acrylic Depth Shadow */}
-                <div className="w-40 sm:w-48 h-4 bg-stone-400/40 rounded-full blur-md mx-auto mt-2" />
+              <div className="relative w-36 aspect-3/4 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20">
+                <img
+                  src={frame.dataUrl}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/20 pointer-events-none" />
               </div>
             )}
 
-            {/* Polaroid Cards Mockup */}
             {selectedProduct === 'card' && (
-              <div className="flex items-center justify-center -space-x-8 hover:space-x-2 transition-all duration-300">
+              <div className="flex items-center justify-center -space-x-4">
                 {[0, 1, 2].map((idx) => (
                   <div
                     key={idx}
-                    className={`w-32 sm:w-36 bg-white p-2.5 pb-6 rounded-lg shadow-xl border border-stone-200 transition-transform ${
-                      idx === 0 ? '-rotate-6 mt-2' : idx === 2 ? 'rotate-6 mt-2' : 'rotate-0 z-10 scale-105'
+                    className={`w-28 bg-[#1E1E1E] p-1.5 pb-4 rounded-md shadow-lg border border-[#333333] ${
+                      idx === 0 ? '-rotate-6' : idx === 2 ? 'rotate-6' : 'rotate-0 z-10 scale-105'
                     }`}
                   >
-                    <div className="aspect-square w-full bg-stone-100 overflow-hidden rounded">
+                    <div className="aspect-square w-full bg-[#111111] overflow-hidden rounded">
                       <img
                         src={frame.dataUrl}
-                        alt="Card"
+                        alt=""
                         className="w-full h-full object-cover"
                       />
-                    </div>
-                    <div className="text-[9px] font-mono text-stone-400 mt-2 text-center tracking-wider">
-                      {frame.timestamp.toFixed(2)}s • AURA #{idx + 1}
                     </div>
                   </div>
                 ))}
               </div>
             )}
 
-            {/* Wooden Frame Mockup */}
             {selectedProduct === 'frame' && (
-              <div className="relative transition-transform duration-300 hover:scale-105">
-                {/* Wooden Frame Exterior */}
-                <div className="p-4 bg-gradient-to-b from-[#8B5A2B] to-[#5C3A21] rounded-xl shadow-2xl border border-stone-800">
-                  {/* Mat board */}
-                  <div className="p-4 bg-[#FAF8F5] rounded shadow-inner">
-                    <div className="w-36 sm:w-44 aspect-3/4 overflow-hidden rounded shadow">
-                      <img
-                        src={frame.dataUrl}
-                        alt="Frame Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
+              <div className="relative w-44 aspect-3/4 bg-[#2C241E] p-3 rounded-md shadow-2xl border border-[#3E342B]">
+                <div className="w-full h-full bg-[#EAE8E3] p-2 flex items-center justify-center">
+                  <img
+                    src={frame.dataUrl}
+                    alt=""
+                    className="w-full h-full object-cover shadow-xs"
+                  />
                 </div>
-                <div className="w-40 sm:w-48 h-4 bg-stone-500/30 rounded-full blur-md mx-auto mt-3" />
               </div>
             )}
           </div>
 
-          {/* Selected Product Details */}
-          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-bold text-stone-900">{currentProduct.title}</h4>
-                <p className="text-xs text-amber-800 font-medium">{currentProduct.subtitle}</p>
-              </div>
-              <div className="text-right">
-                <span className="font-serif-brand text-lg font-bold text-stone-900">
-                  ¥{currentProduct.price.toLocaleString()}
-                </span>
-                <span className="text-[10px] text-stone-500 block">(税込・送料無料)</span>
-              </div>
+          {/* Product Description */}
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center justify-between text-stone-300">
+              <span className="font-medium text-white">{currentProduct.title}</span>
+              <span className="text-[11px] text-stone-500 font-mono">{currentProduct.specs}</span>
             </div>
-            <p className="text-xs text-stone-600 leading-relaxed pt-1 border-t border-stone-200/60">
+            <p className="text-stone-400 leading-relaxed text-[11px]">
               {currentProduct.description}
             </p>
           </div>
 
-          {/* Quantity & Shipping Info */}
-          <div className="flex items-center justify-between text-xs text-stone-600 px-1">
-            <div className="flex items-center gap-2">
-              <span>数量:</span>
-              <div className="inline-flex items-center border border-stone-300 rounded-lg overflow-hidden bg-white">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-2.5 py-1 text-stone-600 hover:bg-stone-100 cursor-pointer"
-                >
-                  -
-                </button>
-                <span className="px-3 py-1 font-mono font-bold text-stone-900">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-2.5 py-1 text-stone-600 hover:bg-stone-100 cursor-pointer"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-stone-500">
-              <Truck className="w-4 h-4 text-stone-400" />
-              <span>国内製造・3〜5営業日でお届け</span>
+          {/* Quantity Selector */}
+          <div className="flex items-center justify-between pt-2 border-t border-[#242424] text-xs">
+            <span className="text-stone-400">数量</span>
+            <div className="flex items-center gap-2 bg-[#1C1C1C] border border-[#2A2A2A] rounded-lg px-2 py-1 tabular-numbers">
+              <button
+                type="button"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="w-5 h-5 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer"
+              >
+                -
+              </button>
+              <span className="w-6 text-center font-mono text-white">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                className="w-5 h-5 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer"
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Modal Footer CTA */}
-        <div className="p-4 sm:px-8 border-t border-stone-200 bg-white flex items-center justify-between gap-4">
+        {/* Footer Order CTA */}
+        <div className="p-4 border-t border-[#242424] bg-[#161616] flex items-center justify-between">
           <div>
-            <span className="text-xs text-stone-500 block">合計金額</span>
-            <span className="font-serif-brand text-xl font-bold text-stone-900">
+            <div className="text-[10px] text-stone-500">合計（税込）</div>
+            <div className="text-base font-bold text-white font-mono tabular-numbers">
               ¥{totalPrice.toLocaleString()}
-            </span>
+            </div>
           </div>
 
           <button
+            type="button"
             onClick={handleOrder}
             disabled={isOrdered}
-            className="flex-1 max-w-xs py-3 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-stone-900 to-stone-800 hover:from-stone-800 hover:to-stone-700 shadow-lg shadow-stone-900/20 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2"
+            className="flex items-center gap-1.5 py-2 px-5 rounded-lg text-xs font-semibold text-black bg-white hover:bg-stone-200 transition-colors cursor-pointer disabled:opacity-50"
           >
             {isOrdered ? (
               <>
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span>予約完了</span>
+                <Check className="w-4 h-4 text-black" />
+                <span>完了</span>
               </>
             ) : (
-              <span>注文手続きへ進む</span>
+              <span>注文を確定する</span>
             )}
           </button>
         </div>
