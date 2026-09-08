@@ -56,6 +56,14 @@ export default function Home() {
 
       setFrames(scored);
 
+      // Check if all frames resulted in zero score (all-black frame symptom)
+      const allZero = scored.every((f) => (f.score || 0) === 0);
+      if (allZero) {
+        setErrorMessage(
+          '動画フレームが真っ黒として読み込まれました。お使いのブラウザでこの動画のハードウェアデコードが制限されている可能性があります。MP4形式の動画でお試しいただくか、「サンプルで体験」をお試しください。'
+        );
+      }
+
       // Select top 1 frame by default
       const bestFrame = scored.find((f) => f.rank === 1) || scored[0];
       setSelectedFrameId(bestFrame.id);

@@ -22,8 +22,10 @@ export interface BurstExtractOptions {
 }
 
 /**
- * Robustly extracts burst frames from a video File, Blob, or URL completely client-side.
- * Compatible with MOV, MP4, WebM across modern browsers.
+ * Extracts burst frames from video files (including iPhone HEVC/hvc1 MOV, MP4, WebM)
+ * completely client-side in Safari and Chrome.
+ * Resolves Safari's blank/black frame issue by maintaining a valid viewport video element,
+ * actively priming the GPU hardware decoder, and validating canvas frame buffers.
  */
 export async function extractBurstFrames(
   videoSource: File | Blob | string,
@@ -47,17 +49,22 @@ export async function extractBurstFrames(
     isCreatedUrl = true;
   }
 
-  // Create video element and attach invisibly to DOM for reliable decoding & hardware acceleration
+  // Create video element attached to DOM viewport
+  // Safari and WebKit optimize out GPU decoding if display:none, 0px, or offscreen (-9999px)
   const video = document.createElement('video');
   video.style.position = 'fixed';
-  video.style.top = '-9999px';
-  video.style.left = '-9999px';
-  video.style.opacity = '0';
+  video.style.bottom = '10px';
+  video.style.right = '10px';
+  video.style.width = '120px';
+  video.style.height = '80px';
+  video.style.opacity = '0.01';
   video.style.pointerEvents = 'none';
-  video.style.width = '160px';
-  video.style.height = '90px';
+  video.style.zIndex = '-9999';
   video.muted = true;
   video.playsInline = true;
+  video.setAttribute('muted', 'true');
+  video.setAttribute('playsinline', 'true');
+  video.setAttribute('webkit-playsinline', 'true');
   video.preload = 'auto';
   video.crossOrigin = 'anonymous';
   document.body.appendChild(video);
@@ -66,7 +73,7 @@ export async function extractBurstFrames(
     video.src = url;
     video.load();
 
-    // Wait for metadata (dimensions, duration)
+    // Wait for video metadata to load
     await new Promise<void>((resolve, reject) => {
       if (video.readyState >= 1) {
         resolve();
@@ -84,7 +91,7 @@ export async function extractBurstFrames(
         let msg = '動画の読み込みに失敗しました。';
         if (err) {
           if (err.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
-            msg = 'お使いのブラウザで直接デコードできない動画形式（一部のHEVC/Apple ProRes MOVなど）の可能性があります。Safariでお試しいただくか、MP4形式に変換してください。';
+            msg = 'お使いのブラウザで直接再生・デコードできない動画形式（一部のApple ProRes MOVなど）の可能性があります。MP4形式または別の動画でお試しください。';
           } else if (err.message) {
             msg = `動画エラー: ${err.message}`;
           }
@@ -97,9 +104,9 @@ export async function extractBurstFrames(
         if (video.readyState >= 1) {
           resolve();
         } else {
-          reject(new Error('動画の読み込みがタイムアウトしました。動画ファイルが破損していないかご確認ください。'));
+          reject(new Error('動画メタデータの読み込みがタイムアウトしました。動画ファイルが破損していないかご確認ください。'));
         }
-      }, 10000);
+      }, 12000);
 
       const cleanup = () => {
         video.removeEventListener('loadedmetadata', onLoadedMetadata);
@@ -111,6 +118,14 @@ export async function extractBurstFrames(
       video.addEventListener('error', onError);
     });
 
+    // Prime the GPU hardware video decoder (Crucial for Safari HEVC / hvc1)
+    try {
+      await video.play();
+      video.pause();
+    } catch {
+      // Continue even if browser autoplay restrictions prevent initial play
+    }
+
     const duration = video.duration || 1;
     const effectiveEndTime = Math.min(
       options.endTime !== undefined ? options.endTime : duration,
@@ -118,7 +133,7 @@ export async function extractBurstFrames(
     );
     const effectiveStartTime = Math.max(0, Math.min(startTime, effectiveEndTime));
 
-    // Generate sampling timestamps
+    // Generate timestamps
     const timestamps: number[] = [];
     for (let t = effectiveStartTime; t <= effectiveEndTime; t += intervalSeconds) {
       timestamps.push(Math.round(t * 1000) / 1000);
@@ -152,10 +167,7 @@ export async function extractBurstFrames(
 
     for (let i = 0; i < timestamps.length; i++) {
       const t = timestamps[i];
-      await seekVideoAccurately(video, t);
-
-      // Render to canvas
-      ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+      await seekAndCaptureFrame(video, ctx, t, targetWidth, targetHeight);
 
       const blob = await new Promise<Blob | null>((res) =>
         canvas.toBlob((b) => res(b), 'image/jpeg', 0.92)
@@ -182,57 +194,109 @@ export async function extractBurstFrames(
 
     return frames;
   } finally {
-    // Cleanup DOM and temporary object URLs
-    video.pause();
-    video.removeAttribute('src');
-    video.load();
-    if (video.parentNode) {
-      video.parentNode.removeChild(video);
+    // Teardown video element and blob URLs
+    try {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      if (video.parentNode) {
+        video.parentNode.removeChild(video);
+      }
+    } catch {
+      // ignore cleanup errors
     }
+
     if (isCreatedUrl) {
-      // Small timeout before revoke to ensure any lingering canvas tasks finish
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
   }
 }
 
 /**
- * Seeks video accurately to target timestamp.
+ * Seeks to target timestamp and ensures the GPU frame is accurately flushed to Canvas.
  */
-function seekVideoAccurately(video: HTMLVideoElement, time: number): Promise<void> {
-  return new Promise((resolve) => {
-    const targetTime = Math.min(Math.max(time, 0), video.duration || time);
+async function seekAndCaptureFrame(
+  video: HTMLVideoElement,
+  ctx: CanvasRenderingContext2D,
+  time: number,
+  width: number,
+  height: number
+): Promise<void> {
+  const targetTime = Math.min(Math.max(time, 0), video.duration || time);
 
-    // If current time is already virtually identical, no need to seek
-    if (Math.abs(video.currentTime - targetTime) < 0.005) {
-      resolve();
-      return;
-    }
-
-    let resolved = false;
-
+  // 1. Seek to exact timestamp
+  await new Promise<void>((resolve) => {
+    let done = false;
     const onSeeked = () => {
-      if (!resolved) {
-        resolved = true;
+      if (!done) {
+        done = true;
         cleanup();
         resolve();
       }
     };
-
-    const timeout = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        cleanup();
-        resolve();
-      }
-    }, 500);
 
     const cleanup = () => {
       video.removeEventListener('seeked', onSeeked);
-      clearTimeout(timeout);
+      clearTimeout(timer);
     };
+
+    const timer = setTimeout(() => {
+      if (!done) {
+        done = true;
+        cleanup();
+        resolve();
+      }
+    }, 450);
 
     video.addEventListener('seeked', onSeeked);
     video.currentTime = targetTime;
   });
+
+  // 2. Wait for GPU render pipeline synchronization
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+
+  // 3. Draw video frame to canvas
+  ctx.drawImage(video, 0, 0, width, height);
+
+  // 4. Black-frame protection:
+  // If canvas is entirely black (Safari HEVC pipeline stall), force a micro-playback tick
+  if (isCanvasPureBlack(ctx, width, height)) {
+    try {
+      await video.play();
+      await new Promise((r) => setTimeout(r, 40));
+      video.pause();
+      ctx.drawImage(video, 0, 0, width, height);
+    } catch {
+      // Fallback: seek slightly forward
+      video.currentTime = Math.min((video.duration || 1) - 0.01, targetTime + 0.02);
+      await new Promise((r) => setTimeout(r, 60));
+      ctx.drawImage(video, 0, 0, width, height);
+    }
+  }
+}
+
+/**
+ * Samples center pixels to verify whether frame is rendered or stuck on pure black (0,0,0)
+ */
+function isCanvasPureBlack(ctx: CanvasRenderingContext2D, width: number, height: number): boolean {
+  try {
+    const sampleSize = 16;
+    const startX = Math.max(0, Math.floor(width / 2) - 8);
+    const startY = Math.max(0, Math.floor(height / 2) - 8);
+    const sample = ctx.getImageData(startX, startY, sampleSize, sampleSize);
+    const d = sample.data;
+
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i] > 12 || d[i + 1] > 12 || d[i + 2] > 12) {
+        return false; // Found color/luminance, not pure black
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
