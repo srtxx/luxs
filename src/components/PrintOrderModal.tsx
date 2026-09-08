@@ -3,11 +3,13 @@
 import React, { useState } from 'react';
 import { X, Package, Check } from 'lucide-react';
 import { BurstFrame } from '@/lib/video-burst';
+import { triggerHapticTick } from '@/lib/haptics';
 
 interface PrintOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   frame: BurstFrame;
+  onOrderSuccess?: (message: string) => void;
 }
 
 type ProductType = 'acrylic' | 'card' | 'frame';
@@ -48,6 +50,7 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
   isOpen,
   onClose,
   frame,
+  onOrderSuccess,
 }) => {
   const [selectedProduct, setSelectedProduct] = useState<ProductType>('acrylic');
   const [quantity, setQuantity] = useState(1);
@@ -60,11 +63,14 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
 
   const handleOrder = () => {
     setIsOrdered(true);
+    triggerHapticTick(1400, 0.08);
     setTimeout(() => {
       setIsOrdered(false);
       onClose();
-      alert('ご注文予約を受け付けました。（プロトタイプ環境のため決済は行われません）');
-    }, 1000);
+      if (onOrderSuccess) {
+        onOrderSuccess('ご注文予約を受け付けました');
+      }
+    }, 1200);
   };
 
   return (

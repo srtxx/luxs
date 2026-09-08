@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { BurstFrame } from '@/lib/video-burst';
-import { Heart, ZoomIn, Columns2, Smartphone, MessageCircle, Send, Bookmark } from 'lucide-react';
+import { Heart, ZoomIn, Columns2, Smartphone } from 'lucide-react';
 import { triggerHapticTick } from '@/lib/haptics';
 
 export type AspectRatio = 'original' | '4:5' | '1:1' | '9:16';
@@ -114,14 +114,6 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
 
   return (
     <div className="w-full h-full flex items-center justify-center p-3 sm:p-6 overflow-hidden select-none relative">
-      {/* Subtle organic ambient backlight reflecting image tones */}
-      <div
-        className="absolute w-[450px] sm:w-[650px] h-[450px] sm:h-[650px] rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700 ease-out"
-        style={{
-          backgroundImage: `radial-gradient(circle, rgba(220, 160, 170, 0.35) 0%, rgba(180, 150, 130, 0.1) 50%, transparent 70%)`,
-        }}
-      />
-
       {/* Main Photographic Lightbox Stage */}
       <div
         ref={containerRef}
@@ -209,59 +201,46 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
           </div>
         )}
 
-        {/* SNS Live Preview Mock Overlay (Instagram Feed & Stories Outline) */}
+        {/* SNS Safety Zone & Composition Reticle Overlay */}
         {isSnsOverlay && (
-          <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-3 sm:p-4 text-white/90 font-sans">
-            {aspectRatio === '9:16' ? (
-              /* Stories Mock Overlay */
-              <>
-                {/* Top Stories Progress Bar & Header */}
-                <div className="space-y-2">
-                  <div className="w-full h-0.5 bg-white/40 rounded-full overflow-hidden">
-                    <div className="w-2/3 h-full bg-white" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-white/30 border border-white/60" />
-                    <span className="text-[11px] font-medium text-white drop-shadow-sm">your_story</span>
-                    <span className="text-[10px] text-white/70">2h</span>
-                  </div>
-                </div>
+          <div className="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between text-white/70 font-mono select-none">
+            {/* Rule of Thirds subtle guidelines */}
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+              <div className="border-r border-b border-white/15" />
+              <div className="border-r border-b border-white/15" />
+              <div className="border-b border-white/15" />
+              <div className="border-r border-b border-white/15" />
+              <div className="border-r border-b border-white/15" />
+              <div className="border-b border-white/15" />
+              <div className="border-r border-white/15" />
+              <div className="border-r border-white/15" />
+              <div />
+            </div>
 
-                {/* Bottom Message & Reaction */}
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-8 rounded-full border border-white/50 bg-black/30 backdrop-blur-xs px-3 flex items-center text-[11px] text-white/70">
-                    メッセージを送信...
-                  </div>
-                  <Heart className="w-5 h-5 text-white drop-shadow-sm" />
-                  <Send className="w-5 h-5 text-white drop-shadow-sm" />
-                </div>
-              </>
-            ) : (
-              /* Feed Mock Overlay (1:1 & 4:5 & original) */
-              <>
-                {/* Post Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-black/40 border border-white/40" />
-                    <span className="text-[11px] font-medium text-white drop-shadow-sm">instagram_post</span>
-                  </div>
-                  <div className="text-xs text-white/80 tracking-widest font-bold">•••</div>
-                </div>
+            {/* Top UI Safety Zone Boundary */}
+            <div className="relative w-full pt-3 px-3 pb-2 border-b border-dashed border-amber-400/50 bg-black/15 backdrop-blur-[1px] flex items-center justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-amber-300 font-semibold drop-shadow-xs">
+                UI SAFE AREA (TOP)
+              </span>
+              <span className="text-[9px] text-white/60">
+                {aspectRatio === '9:16' ? 'ヘッダー・ストーリー進捗域' : 'アカウント表示域'}
+              </span>
+            </div>
 
-                {/* Post Footer Actions */}
-                <div className="space-y-1.5 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-2 rounded-b-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Heart className="w-4 h-4 text-white drop-shadow-sm" />
-                      <MessageCircle className="w-4 h-4 text-white drop-shadow-sm" />
-                      <Send className="w-4 h-4 text-white drop-shadow-sm" />
-                    </div>
-                    <Bookmark className="w-4 h-4 text-white drop-shadow-sm" />
-                  </div>
-                  <div className="text-[10px] text-white/80 font-medium">いいね！ 1,280件</div>
-                </div>
-              </>
-            )}
+            {/* Center Reticle */}
+            <div className="absolute inset-0 m-auto w-6 h-6 border border-white/30 rounded-full flex items-center justify-center pointer-events-none">
+              <div className="w-1.5 h-1.5 bg-white/40 rounded-full" />
+            </div>
+
+            {/* Bottom UI Safety Zone Boundary */}
+            <div className="relative w-full pb-3 px-3 pt-2 border-t border-dashed border-amber-400/50 bg-black/15 backdrop-blur-[1px] flex items-center justify-between">
+              <span className="text-[9px] uppercase tracking-wider text-amber-300 font-semibold drop-shadow-xs">
+                UI SAFE AREA (BOTTOM)
+              </span>
+              <span className="text-[9px] text-white/60">
+                {aspectRatio === '9:16' ? 'メッセージ入力・リアクション域' : 'キャプション・アクション域'}
+              </span>
+            </div>
           </div>
         )}
 

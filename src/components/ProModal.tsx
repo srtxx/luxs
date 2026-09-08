@@ -2,16 +2,31 @@
 
 import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
+import { triggerHapticTick } from '@/lib/haptics';
 
 interface ProModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: (message: string) => void;
 }
 
-export const ProModal: React.FC<ProModalProps> = ({ isOpen, onClose }) => {
+export const ProModal: React.FC<ProModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [billingCycle, setBillingCycle] = useState<'yearly' | 'monthly'>('yearly');
+  const [isActivated, setIsActivated] = useState(false);
 
   if (!isOpen) return null;
+
+  const handleActivate = () => {
+    setIsActivated(true);
+    triggerHapticTick(1500, 0.08);
+    setTimeout(() => {
+      setIsActivated(false);
+      onClose();
+      if (onSuccess) {
+        onSuccess('PROプランが有効化されました');
+      }
+    }, 1000);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn select-none">
@@ -87,13 +102,18 @@ export const ProModal: React.FC<ProModalProps> = ({ isOpen, onClose }) => {
         {/* CTA */}
         <div className="p-6 pt-2">
           <button
-            onClick={() => {
-              alert('PRO体験を開始しました（デモ環境）');
-              onClose();
-            }}
-            className="w-full py-2.5 rounded-xl text-xs font-semibold text-white bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] transition-all shadow-sm cursor-pointer"
+            onClick={handleActivate}
+            disabled={isActivated}
+            className="w-full py-2.5 rounded-xl text-xs font-semibold text-white bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] transition-all shadow-sm cursor-pointer disabled:opacity-75 flex items-center justify-center gap-2"
           >
-            7日間の無料体験を開始
+            {isActivated ? (
+              <>
+                <Check className="w-4 h-4 text-white" />
+                <span>有効化完了</span>
+              </>
+            ) : (
+              <span>7日間の無料体験を開始</span>
+            )}
           </button>
           <p className="text-[10px] text-[var(--foreground-muted)] text-center mt-2">
             いつでもキャンセル可能。無料期間終了まで課金されません。

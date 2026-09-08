@@ -48,6 +48,12 @@ export default function Home() {
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false);
   const [isCollageModalOpen, setIsCollageModalOpen] = useState(false);
   const [isLiveLoopModalOpen, setIsLiveLoopModalOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'scrub' | 'tone'>('scrub');
+
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2500);
+  }, []);
 
   // Sync theme with DOM attribute
   useEffect(() => {
@@ -232,15 +238,13 @@ export default function Home() {
       const filename = `luxs_photo_${timeStr}s.png`;
       await exportCroppedPng(url, aspectRatio, filename);
       triggerHapticTick(1500, 0.06);
-      setToastMessage('写真を保存しました');
-      setTimeout(() => setToastMessage(null), 2500);
+      showToast('写真を保存しました');
     } catch {
-      setToastMessage('保存に失敗しました');
-      setTimeout(() => setToastMessage(null), 2500);
+      showToast('保存に失敗しました');
     } finally {
       setIsSaving(false);
     }
-  }, [currentFrame, enhancedUrl, aspectRatio]);
+  }, [currentFrame, enhancedUrl, aspectRatio, showToast]);
 
   // Copy current image to clipboard
   const handleCopyImage = useCallback(async () => {
@@ -253,16 +257,14 @@ export default function Home() {
       await navigator.clipboard.write([
         new ClipboardItem({ 'image/png': blob }),
       ]);
-      setToastMessage('クリップボードにコピーしました');
+      showToast('クリップボードにコピーしました');
       triggerHapticTick(1400, 0.05);
-      setTimeout(() => setToastMessage(null), 2500);
     } catch {
-      setToastMessage('クリップボードへのコピーに失敗しました');
-      setTimeout(() => setToastMessage(null), 2500);
+      showToast('クリップボードへのコピーに失敗しました');
     } finally {
       setIsCopying(false);
     }
-  }, [currentFrame, enhancedUrl]);
+  }, [currentFrame, enhancedUrl, showToast]);
 
   // Save all frames as ZIP
   const handleSaveAllZip = useCallback(async () => {
@@ -271,15 +273,13 @@ export default function Home() {
     try {
       await downloadFramesZip(frames, 'luxs_burst_frames.zip');
       triggerHapticTick(1500, 0.06);
-      setToastMessage('全コマをZIP保存しました');
-      setTimeout(() => setToastMessage(null), 2500);
+      showToast('全コマをZIP保存しました');
     } catch {
-      setToastMessage('ZIPの書き出しに失敗しました');
-      setTimeout(() => setToastMessage(null), 2500);
+      showToast('ZIPの書き出しに失敗しました');
     } finally {
       setIsSavingAll(false);
     }
-  }, [frames]);
+  }, [frames, showToast]);
 
   // Keyboard global shortcuts
   useEffect(() => {
@@ -359,6 +359,8 @@ export default function Home() {
             onOpenContactSheet={() => setIsContactSheetOpen(true)}
             onOpenCollage={() => setIsCollageModalOpen(true)}
             onOpenLiveLoop={() => setIsLiveLoopModalOpen(true)}
+            onOpenPrintModal={() => setIsPrintModalOpen(true)}
+            onOpenProModal={() => setIsProModalOpen(true)}
             theme={theme}
             onSelectTheme={handleSelectTheme}
             favoritedCount={favoritedIds.length}
@@ -379,22 +381,72 @@ export default function Home() {
           </div>
 
           {/* Bottom Console: Scrubber + Tone Toolbar */}
-          <div className="w-full max-w-3xl mx-auto px-4 pb-4 space-y-2 shrink-0">
-            <TactileScrubber
-              frames={frames}
-              currentIndex={currentIndex}
-              onIndexChange={setCurrentIndex}
-              recommendedIndices={recommendedIndices}
-              favoritedIds={favoritedIds}
-            />
+          <div className="w-full max-w-3xl mx-auto px-4 pb-4 shrink-0">
+            {/* Mobile Tab Switcher */}
+            <div className="sm:hidden flex items-center justify-center mb-2">
+              <div className="flex items-center gap-0.5 bg-[var(--surface-subtle)] p-0.5 rounded-lg border border-[var(--surface-border)]">
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('scrub')}
+                  className={`px-4 py-1 text-[11px] font-medium rounded-md transition-all cursor-pointer ${
+                    mobileTab === 'scrub'
+                      ? 'bg-[var(--surface)] text-[var(--foreground)] font-semibold shadow-2xs'
+                      : 'text-[var(--foreground-muted)]'
+                  }`}
+                >
+                  コマ送り
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileTab('tone')}
+                  className={`px-4 py-1 text-[11px] font-medium rounded-md transition-all cursor-pointer ${
+                    mobileTab === 'tone'
+                      ? 'bg-[var(--surface)] text-[var(--foreground)] font-semibold shadow-2xs'
+                      : 'text-[var(--foreground-muted)]'
+                  }`}
+                >
+                  レタッチ
+                </button>
+              </div>
+            </div>
 
-            <ToneToolbar
-              currentTone={currentTone}
-              onSelectTone={setCurrentTone}
-              toneIntensity={toneIntensity}
-              onChangeIntensity={setToneIntensity}
-              onOpenPrintModal={() => setIsPrintModalOpen(true)}
-            />
+            {/* Mobile: Switch between Scrubber and Tone */}
+            <div className="sm:hidden">
+              {mobileTab === 'scrub' ? (
+                <TactileScrubber
+                  frames={frames}
+                  currentIndex={currentIndex}
+                  onIndexChange={setCurrentIndex}
+                  recommendedIndices={recommendedIndices}
+                  favoritedIds={favoritedIds}
+                />
+              ) : (
+                <ToneToolbar
+                  currentTone={currentTone}
+                  onSelectTone={setCurrentTone}
+                  toneIntensity={toneIntensity}
+                  onChangeIntensity={setToneIntensity}
+                />
+              )}
+            </div>
+
+            {/* Desktop / Tablet: Both displayed simultaneously */}
+            <div className="hidden sm:block space-y-2">
+              <TactileScrubber
+                frames={frames}
+                currentIndex={currentIndex}
+                onIndexChange={setCurrentIndex}
+                recommendedIndices={recommendedIndices}
+                favoritedIds={favoritedIds}
+              />
+
+              <ToneToolbar
+                currentTone={currentTone}
+                onSelectTone={setCurrentTone}
+                toneIntensity={toneIntensity}
+                onChangeIntensity={setToneIntensity}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -424,6 +476,7 @@ export default function Home() {
           isOpen={isPrintModalOpen}
           onClose={() => setIsPrintModalOpen(false)}
           frame={currentFrame}
+          onOrderSuccess={(msg) => showToast(msg)}
         />
       )}
 
@@ -450,6 +503,7 @@ export default function Home() {
       <ProModal
         isOpen={isProModalOpen}
         onClose={() => setIsProModalOpen(false)}
+        onSuccess={(msg) => showToast(msg)}
       />
     </main>
   );

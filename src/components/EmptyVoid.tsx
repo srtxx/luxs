@@ -84,14 +84,6 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({
     }
   };
 
-  const handleDesktopDirectTest = () => {
-    setFileError(null);
-    onVideoSelected('/Users/suganuma_ryohei/Desktop/IMG_8198 2.mov', {
-      intervalSeconds,
-      maxFrames,
-    });
-  };
-
   return (
     <div className="w-full h-full flex flex-col justify-between select-none relative overflow-hidden bg-[var(--background)] transition-colors duration-200">
       {/* 1. Permanent Studio Header */}
@@ -152,14 +144,6 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({
 
       {/* 2. Main Workbench & Drop Stage */}
       <div className="flex-1 w-full min-h-0 flex flex-col items-center justify-center p-4 sm:p-8 relative overflow-hidden">
-        {/* Subtle optical backlight glow */}
-        <div
-          className="absolute w-[500px] sm:w-[700px] h-[500px] sm:h-[700px] rounded-full blur-3xl opacity-25 pointer-events-none -top-20"
-          style={{
-            backgroundImage: `radial-gradient(circle, rgba(220, 160, 170, 0.35) 0%, rgba(200, 180, 160, 0.12) 50%, transparent 70%)`,
-          }}
-        />
-
         <input
           ref={fileInputRef}
           type="file"
@@ -226,18 +210,8 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({
           </button>
         </div>
 
-        {/* Direct Test Options */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mt-6 z-10">
-          <button
-            type="button"
-            onClick={handleDesktopDirectTest}
-            disabled={isProcessing}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
-          >
-            <Film className="w-3.5 h-3.5 opacity-70" />
-            <span>デスクトップ動画（IMG_8198 2.mov）</span>
-          </button>
-
+        {/* Demo Option */}
+        <div className="flex items-center justify-center mt-6 z-10">
           <button
             type="button"
             onClick={handleSampleDemo}
@@ -245,7 +219,7 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
           >
             <Play className="w-3.5 h-3.5 opacity-70" />
-            <span>{isGeneratingSample ? '生成中...' : 'デモ動画'}</span>
+            <span>{isGeneratingSample ? 'サンプルを準備中...' : 'サンプル動画で試す'}</span>
           </button>
         </div>
       </div>

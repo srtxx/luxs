@@ -1,8 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { AspectRatio } from './StudioCanvas';
-import { Download, Archive, X, LayoutGrid, Copy, Sun, Palette, Moon, Heart, Grid2X2, Repeat } from 'lucide-react';
+import {
+  Download,
+  Archive,
+  X,
+  LayoutGrid,
+  Copy,
+  Sun,
+  Palette,
+  Moon,
+  Heart,
+  Grid2X2,
+  Repeat,
+  Package,
+  ChevronDown,
+} from 'lucide-react';
 import { triggerHapticTick } from '@/lib/haptics';
 import { LuxsBrand } from './LuxsBrand';
 
@@ -21,6 +35,8 @@ interface StudioHeaderProps {
   onOpenContactSheet: () => void;
   onOpenCollage: () => void;
   onOpenLiveLoop: () => void;
+  onOpenPrintModal: () => void;
+  onOpenProModal: () => void;
   theme: AppTheme;
   onSelectTheme: (theme: AppTheme) => void;
   favoritedCount: number;
@@ -49,6 +65,8 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   onOpenContactSheet,
   onOpenCollage,
   onOpenLiveLoop,
+  onOpenPrintModal,
+  onOpenProModal,
   theme,
   onSelectTheme,
   favoritedCount,
@@ -56,11 +74,26 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   currentIndex,
   totalFrames,
 }) => {
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
+  const toolsMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close tools menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (toolsMenuRef.current && !toolsMenuRef.current.contains(e.target as Node)) {
+        setIsToolsMenuOpen(false);
+      }
+    };
+    if (isToolsMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isToolsMenuOpen]);
+
   return (
     <header className="w-full h-14 px-3 sm:px-5 flex items-center justify-between border-b border-[var(--surface-border)] bg-[var(--surface)] z-30 select-none transition-colors duration-200 shrink-0">
       {/* Left: Brand + Exit + Instrument Metrology Readout */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Brand Monogram */}
         <LuxsBrand compact={true} showStatus={false} />
 
         <div className="h-4 w-px bg-[var(--surface-border)]" />
@@ -91,58 +124,10 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
             )}
           </div>
         )}
-
-        <div className="hidden sm:block h-4 w-px bg-[var(--surface-border)]" />
-
-        {/* Contact Sheet (All Frames Grid) Button */}
-        <button
-          type="button"
-          onClick={onOpenContactSheet}
-          className="flex items-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
-          title="全コマ一覧（コンタクトシート）"
-        >
-          <LayoutGrid className="w-3.5 h-3.5 opacity-70" />
-          <span className="hidden sm:inline">全コマ一覧</span>
-        </button>
-
-        {/* Favorite Counter Pill */}
-        {favoritedCount > 0 && (
-          <button
-            type="button"
-            onClick={onOpenContactSheet}
-            className="flex items-center gap-1.5 py-1 px-2.5 rounded-full text-[11px] font-medium text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] border border-[var(--accent-primary)]/30 tactile-btn cursor-pointer shadow-2xs"
-            title="保存候補一覧を表示"
-          >
-            <Heart className="w-3 h-3 fill-current" />
-            <span className="tabular-numbers font-medium">{favoritedCount}</span>
-          </button>
-        )}
-
-        {/* Collage (組写真) Button */}
-        <button
-          type="button"
-          onClick={onOpenCollage}
-          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
-          title="お気に入りコマで組写真（コラージュ）を作成"
-        >
-          <Grid2X2 className="w-3.5 h-3.5 opacity-70" />
-          <span className="hidden xl:inline">組写真</span>
-        </button>
-
-        {/* Live Loop (ループ動画) Button */}
-        <button
-          type="button"
-          onClick={onOpenLiveLoop}
-          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
-          title="Live Photo風ループ動画を書き出し"
-        >
-          <Repeat className="w-3.5 h-3.5 opacity-70" />
-          <span className="hidden xl:inline">ループ動画</span>
-        </button>
       </div>
 
       {/* Center: Aspect Ratio Selector */}
-      <div className="hidden lg:flex items-center gap-0.5 bg-[var(--surface-subtle)] p-0.5 rounded-lg border border-[var(--surface-border)]">
+      <div className="hidden sm:flex items-center gap-0.5 bg-[var(--surface-subtle)] p-0.5 rounded-lg border border-[var(--surface-border)]">
         {RATIOS.map((r) => {
           const isSelected = aspectRatio === r.id;
           return (
@@ -165,10 +150,111 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
         })}
       </div>
 
-      {/* Right: Theme Switcher & Export Actions */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      {/* Right: Tools & Export Actions */}
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        {/* Contact Sheet (All Frames Grid) Button */}
+        <button
+          type="button"
+          onClick={onOpenContactSheet}
+          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
+          title="全コマ一覧"
+        >
+          <LayoutGrid className="w-3.5 h-3.5 opacity-70" />
+          <span className="hidden md:inline">全コマ一覧</span>
+          {favoritedCount > 0 && (
+            <span className="flex items-center gap-0.5 text-[10px] font-semibold text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] px-1.5 py-0.2 rounded-full border border-[var(--accent-primary)]/30">
+              <Heart className="w-2.5 h-2.5 fill-current" />
+              <span className="tabular-numbers">{favoritedCount}</span>
+            </span>
+          )}
+        </button>
+
+        {/* Creation & Products Consolidated Menu */}
+        <div className="relative" ref={toolsMenuRef}>
+          <button
+            type="button"
+            onClick={() => {
+              setIsToolsMenuOpen(!isToolsMenuOpen);
+              triggerHapticTick(1000, 0.02);
+            }}
+            className={`flex items-center gap-1 py-1.5 px-2.5 rounded-lg text-xs font-medium border tactile-btn cursor-pointer shadow-2xs ${
+              isToolsMenuOpen
+                ? 'bg-[var(--surface-hover)] border-[var(--accent-primary)] text-[var(--foreground)]'
+                : 'bg-[var(--surface-subtle)] border-[var(--surface-border)] text-[var(--foreground)] hover:bg-[var(--surface-hover)]'
+            }`}
+            title="組写真・ループ動画・プリント"
+          >
+            <span>作成</span>
+            <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isToolsMenuOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-48 bg-[var(--surface)] border border-[var(--surface-border)] rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 animate-fadeIn text-[var(--foreground)]">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  onOpenCollage();
+                }}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs hover:bg-[var(--surface-hover)] text-left cursor-pointer transition-colors"
+              >
+                <Grid2X2 className="w-4 h-4 opacity-70" />
+                <div>
+                  <div className="font-medium">組写真</div>
+                  <div className="text-[10px] text-[var(--foreground-muted)]">複数コマを1枚に配置</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  onOpenLiveLoop();
+                }}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs hover:bg-[var(--surface-hover)] text-left cursor-pointer transition-colors"
+              >
+                <Repeat className="w-4 h-4 opacity-70" />
+                <div>
+                  <div className="font-medium">ループ動画</div>
+                  <div className="text-[10px] text-[var(--foreground-muted)]">Live Photo風ショートループ</div>
+                </div>
+              </button>
+
+              <div className="my-1 border-t border-[var(--surface-border)]" />
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsToolsMenuOpen(false);
+                  onOpenPrintModal();
+                }}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs hover:bg-[var(--surface-hover)] text-left cursor-pointer transition-colors"
+              >
+                <Package className="w-4 h-4 opacity-70" />
+                <div>
+                  <div className="font-medium">プリント注文</div>
+                  <div className="text-[10px] text-[var(--foreground-muted)]">アクリルやカード印刷</div>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="h-4 w-px bg-[var(--surface-border)] hidden sm:block" />
+
+        {/* PRO Upgrade Button */}
+        <button
+          type="button"
+          onClick={onOpenProModal}
+          className="hidden sm:flex items-center gap-1 py-1 px-2.5 rounded-lg text-[11px] font-semibold text-[var(--foreground)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
+          title="PROプランの特典を確認"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]" />
+          <span>PRO</span>
+        </button>
+
         {/* Theme Switcher Segment */}
-        <div className="flex items-center gap-0.5 bg-[var(--surface-subtle)] p-0.5 rounded-lg border border-[var(--surface-border)]">
+        <div className="hidden sm:flex items-center gap-0.5 bg-[var(--surface-subtle)] p-0.5 rounded-lg border border-[var(--surface-border)]">
           <button
             type="button"
             onClick={() => {
@@ -180,7 +266,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                 ? 'bg-[var(--surface)] text-amber-600 shadow-2xs'
                 : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
             }`}
-            title="ルミナス（上品なウォームライト）"
+            title="ルミナス（ウォームライト）"
           >
             <Sun className="w-3.5 h-3.5" />
           </button>
@@ -195,7 +281,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                 ? 'bg-[var(--surface)] text-rose-500 shadow-2xs'
                 : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
             }`}
-            title="ブラッシュ（やわらかな血色ニュアンス）"
+            title="ブラッシュ（血色ニュアンス）"
           >
             <Palette className="w-3.5 h-3.5" />
           </button>
@@ -210,7 +296,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                 ? 'bg-[var(--surface)] text-stone-300 shadow-2xs'
                 : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'
             }`}
-            title="ノワール（シックなスタジオダーク）"
+            title="ノワール（スタジオ暗室）"
           >
             <Moon className="w-3.5 h-3.5" />
           </button>
@@ -223,11 +309,11 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           type="button"
           onClick={onCopyImage}
           disabled={isCopying}
-          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium text-[var(--foreground)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs disabled:opacity-50"
+          className="hidden md:flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs disabled:opacity-50"
           title="クリップボードに画像をコピー"
         >
           <Copy className="w-3.5 h-3.5 opacity-70" />
-          <span className="hidden sm:inline">{isCopying ? 'コピー中...' : 'コピー'}</span>
+          <span>{isCopying ? 'コピー中...' : 'コピー'}</span>
         </button>
 
         {/* Zip Download */}

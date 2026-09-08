@@ -43,7 +43,7 @@
 }
 
 [data-theme="noir"] {
-  /* Studio Noir (研ぎ澄まされたモダン・スタジオダーク) */
+  /* Studio Noir (研ぎ澄まされたモダン・スタジオ暗室) */
   --background: #0E0D0D;
   --foreground: #F5F2F0;
   --foreground-muted: #9E9692;
@@ -52,10 +52,10 @@
   --surface-hover: #2C2929;
   --surface-border: #333030;
   --surface-border-strong: #454040;
-  --accent-primary: #E07A87;
-  --accent-primary-hover: #D46674;
-  --accent-primary-subtle: #3A1F24;
-  --accent-primary-text: #F7D4DA;
+  --accent-primary: #524E4B;
+  --accent-primary-hover: #635F5B;
+  --accent-primary-subtle: #292625;
+  --accent-primary-text: #F5F2F0;
   --track-bg: #1F1D1D;
   --playhead-color: #FFFFFF;
   --canvas-bg: #080808;

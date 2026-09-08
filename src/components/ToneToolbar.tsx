@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { EnhancementSettings } from '@/lib/image-enhancer';
-import { Package, Sliders } from 'lucide-react';
+import { Sliders } from 'lucide-react';
 import { triggerHapticTick } from '@/lib/haptics';
 
 export type TonePreset = 'rosy' | 'pale' | 'glow' | 'clear' | 'film' | 'monochrome' | 'original';
@@ -118,7 +118,6 @@ interface ToneToolbarProps {
   onSelectTone: (tone: TonePreset) => void;
   toneIntensity: number; // 0 to 100
   onChangeIntensity: (intensity: number) => void;
-  onOpenPrintModal: () => void;
 }
 
 export const ToneToolbar: React.FC<ToneToolbarProps> = ({
@@ -126,7 +125,6 @@ export const ToneToolbar: React.FC<ToneToolbarProps> = ({
   onSelectTone,
   toneIntensity,
   onChangeIntensity,
-  onOpenPrintModal,
 }) => {
   const isOriginal = currentTone === 'original';
 
@@ -164,40 +162,27 @@ export const ToneToolbar: React.FC<ToneToolbarProps> = ({
         </div>
       )}
 
-      {/* Lower row: 1-Tap Tone Swatches + Print Button */}
-      <div className="w-full flex items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-1.5 overflow-x-auto py-1">
-          {TONE_PRESETS.map((tone) => {
-            const isSelected = currentTone === tone.id;
-            return (
-              <button
-                key={tone.id}
-                type="button"
-                onClick={() => handleToneClick(tone.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 border tactile-btn ${
-                  isSelected
-                    ? 'bg-[var(--surface)] text-[var(--foreground)] border-[var(--accent-primary)] shadow-xs ring-1 ring-[var(--accent-primary)]/30'
-                    : 'bg-[var(--surface-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] border-[var(--surface-border)]'
-                }`}
-              >
-                {/* Visual mood swatch dot */}
-                <div className={`w-2.5 h-2.5 rounded-full ${tone.swatchClass} shadow-2xs`} />
-                <span>{tone.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Print Button */}
-        <button
-          type="button"
-          onClick={onOpenPrintModal}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shrink-0 shadow-xs"
-          title="アクリルブロックやカードとしてプリント注文"
-        >
-          <Package className="w-3.5 h-3.5 opacity-70" />
-          <span>プリント</span>
-        </button>
+      {/* Lower row: 1-Tap Tone Swatches */}
+      <div className="w-full flex items-center gap-1.5 overflow-x-auto py-1 px-1">
+        {TONE_PRESETS.map((tone) => {
+          const isSelected = currentTone === tone.id;
+          return (
+            <button
+              key={tone.id}
+              type="button"
+              onClick={() => handleToneClick(tone.id)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 border tactile-btn ${
+                isSelected
+                  ? 'bg-[var(--surface)] text-[var(--foreground)] border-[var(--accent-primary)] shadow-xs ring-1 ring-[var(--accent-primary)]/30'
+                  : 'bg-[var(--surface-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] border-[var(--surface-border)]'
+              }`}
+            >
+              {/* Visual mood swatch dot */}
+              <div className={`w-2.5 h-2.5 rounded-full ${tone.swatchClass} shadow-2xs`} />
+              <span>{tone.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
