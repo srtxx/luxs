@@ -17,17 +17,10 @@ import { scoreAllFrames } from '@/lib/image-scoring';
 import { enhanceImage } from '@/lib/image-enhancer';
 import { exportCroppedPng, downloadFramesZip } from '@/lib/crop-export';
 import { triggerHapticTick } from '@/lib/haptics';
+import { useAppTheme } from '@/lib/theme';
 
 export default function Home() {
-  const [theme, setTheme] = useState<AppTheme>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('luxs_theme') as AppTheme | null;
-      if (saved && (saved === 'luminous' || saved === 'blush' || saved === 'noir')) {
-        return saved;
-      }
-    }
-    return 'luminous';
-  });
+  const [theme, setTheme] = useAppTheme();
   const [stage, setStage] = useState<'idle' | 'extracting' | 'scoring' | 'ready'>('idle');
   const [progress, setProgress] = useState(0);
   const [progressCurrent, setProgressCurrent] = useState(0);
@@ -55,14 +48,8 @@ export default function Home() {
     setTimeout(() => setToastMessage(null), 2500);
   }, []);
 
-  // Sync theme with DOM attribute
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
   const handleSelectTheme = (newTheme: AppTheme) => {
     setTheme(newTheme);
-    localStorage.setItem('luxs_theme', newTheme);
   };
 
   // Indices of top recommended frames (Rank 1, 2, 3)

@@ -12,8 +12,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className="h-full overflow-hidden dark">
-      <body className="h-full w-full overflow-hidden bg-[#0C0C0C] text-[#F5F5F5] antialiased">
+    <html lang="ja" className="h-full overflow-hidden" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('luxs_theme');if(t&&['luminous','blush','noir'].indexOf(t)!==-1){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body className="h-full w-full overflow-hidden bg-[var(--background)] text-[var(--foreground)] antialiased">
         {children}
       </body>
     </html>
