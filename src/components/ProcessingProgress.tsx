@@ -1,5 +1,7 @@
+'use client';
+
 import React from 'react';
-import { Loader2, Layers, Activity } from 'lucide-react';
+import { Loader2, Layers, Sparkles } from 'lucide-react';
 
 interface ProcessingProgressProps {
   stage: 'extracting' | 'scoring' | 'done';
@@ -17,43 +19,43 @@ export const ProcessingProgress: React.FC<ProcessingProgressProps> = ({
   const isExtracting = stage === 'extracting';
 
   return (
-    <div className="w-full max-w-xl mx-auto my-12 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-2xl space-y-5 text-center">
+    <div className="w-full max-w-lg mx-auto my-12 p-8 rounded-3xl bg-white border border-stone-200/90 shadow-xl space-y-6 text-center animate-fadeIn text-stone-900">
       <div className="flex justify-center">
         <div className="relative">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-100 to-orange-100 border border-amber-200 flex items-center justify-center text-amber-800 shadow-sm">
             {isExtracting ? (
-              <Layers className="w-7 h-7 animate-pulse" />
+              <Layers className="w-8 h-8 animate-pulse text-amber-700" />
             ) : (
-              <Activity className="w-7 h-7 animate-pulse" />
+              <Sparkles className="w-8 h-8 animate-pulse text-amber-700" />
             )}
           </div>
-          <div className="absolute -bottom-1 -right-1 bg-slate-950 p-1 rounded-full border border-slate-800">
-            <Loader2 className="w-4 h-4 text-amber-400 animate-spin" />
+          <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full border border-stone-200 shadow">
+            <Loader2 className="w-4 h-4 text-amber-600 animate-spin" />
           </div>
         </div>
       </div>
 
-      <div className="space-y-1">
-        <h3 className="text-base font-bold text-slate-100">
-          {isExtracting ? '動画フレームを連写分解中...' : 'AI鮮明度スコアリング中...'}
+      <div className="space-y-1.5">
+        <h3 className="font-serif-brand text-lg font-bold text-stone-900">
+          {isExtracting ? '時間の中から、すべての瞬間を展開中...' : '一番美しい奇跡の一瞬を探しています...'}
         </h3>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-stone-500">
           {isExtracting
             ? `フレーム抽出: ${current} / ${total} コマ`
-            : `ブレ・鮮明度・露出を解析中: ${current} / ${total} コマ`}
+            : `ブレ・表情・透明度を丁寧に解析中: ${current} / ${total} コマ`}
         </p>
       </div>
 
       {/* Progress bar */}
-      <div className="space-y-1.5">
-        <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+      <div className="space-y-1.5 max-w-sm mx-auto">
+        <div className="w-full h-2 rounded-full bg-stone-100 overflow-hidden border border-stone-200/60">
           <div
-            className="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-200 ease-out"
+            className="h-full bg-gradient-to-r from-amber-400 via-orange-400 to-amber-300 rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="flex justify-between text-[11px] font-mono text-slate-500">
-          <span>{isExtracting ? 'FRAME EXTRACTION' : 'QUALITY ANALYSIS'}</span>
+        <div className="flex justify-between text-[11px] font-mono text-stone-400 px-0.5">
+          <span>{isExtracting ? 'FRAME EXTRACTION' : 'AURA ANALYSIS'}</span>
           <span>{progress}%</span>
         </div>
       </div>

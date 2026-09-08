@@ -1,18 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #f8fafc;
+  --background: #FAF9F5;
+  --foreground: #1C1917;
+  --card: #FFFFFF;
+  --card-border: #E7E5E4;
+  --accent-gold: #B45309;
+  --accent-rose: #C2410C;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Custom smooth animation */
+/* Elegant serif font for brand headers */
+.font-serif-brand {
+  font-family: Didot, "Bodoni MT", "Cinzel", "Times New Roman", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  letter-spacing: 0.12em;
+}
+
+/* Custom smooth animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -25,25 +36,25 @@ body {
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Custom scrollbar for filmstrip */
+/* Elegant scrollbar */
 ::-webkit-scrollbar {
   height: 6px;
   width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d16;
-  border-radius: 4px;
+  background: #F5F5F0;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  background: #D6D3D1;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #A8A29E;
 }

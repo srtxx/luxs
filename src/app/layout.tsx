@@ -1,21 +1,10 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
-
 export const metadata: Metadata = {
-  title: 'LUXS - 動画バースト抽出 & ベストショット高画質化',
+  title: 'LUXS - 一瞬に宿るアウラを、永遠の1枚に。',
   description:
-    '動画から奇跡の瞬間を連写バースト分解し、AI鮮明度解析でブレのないベストショットを自動検出・高画質化するSNS特化型ツール。',
+    '動画の連続する時間の中から、あなただけの最も美しい奇跡の瞬間（アウラ）を救い出す。AI鮮明度解析と高精細レタッチによる新しいポートレート体験。',
 };
 
 export default function RootLayout({
@@ -24,11 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ja"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
-    >
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100">{children}</body>
+    <html lang="ja" className="h-full antialiased light">
+      <body className="min-h-full flex flex-col bg-[#FAF9F5] text-stone-900">{children}</body>
     </html>
   );
 }

@@ -29,7 +29,7 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
     if (isValidVideoFile(file)) {
       onVideoSelected(file, { intervalSeconds, maxFrames });
     } else {
-      setFileError('選択されたファイルは対応動画形式（MP4, MOV, WebM等）ではありません。');
+      setFileError('対応している動画形式（MP4, MOV, WebM等）をお選びください。');
     }
   };
 
@@ -84,20 +84,25 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      <div className="text-center space-y-3 pt-6 pb-2">
-        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
-          動画から<span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300">奇跡の瞬間</span>を切り取る
+    <div className="w-full max-w-3xl mx-auto space-y-6 pt-4 sm:pt-8 animate-fadeIn">
+      {/* Hero Title Section */}
+      <div className="text-center space-y-3 pb-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 border border-amber-200/80 text-amber-900 text-xs font-semibold tracking-wider uppercase shadow-xs">
+          <span>PORTRAIT & AURA DISCOVERY</span>
+        </div>
+
+        <h1 className="font-serif-brand text-3xl sm:text-5xl font-bold tracking-wide text-stone-900 leading-tight">
+          動画に宿る、<span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-700 via-orange-600 to-amber-600">奇跡の瞬間</span>を。
         </h1>
-        <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          動画を自動バースト（連写）分解し、AI鮮明度解析でブレのないベストフレームを検出。
-          高画質化・レタッチを施してSNS用のベストショットを生成します。
+
+        <p className="text-xs sm:text-sm text-stone-600 max-w-xl mx-auto leading-relaxed">
+          自然に動いている何気ない数秒の動画から、ポーズでは作れない一番美しい表情や澄んだまなざしをAIが丁寧に見つけ出し、息を呑む最高画質で届けます。
         </p>
       </div>
 
       {fileError && (
-        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 shadow-xs">
+          <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
           <span>{fileError}</span>
         </div>
       )}
@@ -108,10 +113,10 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !isProcessing && fileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all cursor-pointer select-none group ${
+        className={`relative rounded-3xl p-8 sm:p-14 text-center transition-all duration-300 cursor-pointer select-none group border-2 border-dashed bg-white shadow-lg ${
           isDragOver
-            ? 'border-amber-400 bg-amber-500/10 scale-[1.01]'
-            : 'border-slate-800 hover:border-slate-700 bg-slate-900/50 hover:bg-slate-900/80'
+            ? 'border-amber-500 bg-amber-50/40 scale-[1.01] shadow-xl'
+            : 'border-stone-300 hover:border-amber-400 hover:bg-amber-50/20 hover:shadow-xl'
         }`}
       >
         <input
@@ -124,37 +129,37 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
         />
 
         <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center group-hover:scale-110 group-hover:border-amber-500/50 transition-all shadow-xl">
-            <UploadCloud className="w-8 h-8 text-slate-300 group-hover:text-amber-400 transition-colors" />
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-100 to-orange-50 border border-amber-200/80 flex items-center justify-center group-hover:scale-110 group-hover:border-amber-400 transition-all shadow-xs">
+            <UploadCloud className="w-8 h-8 text-amber-700 group-hover:text-amber-600 transition-colors" />
           </div>
 
           <div className="space-y-1">
-            <p className="text-base sm:text-lg font-semibold text-slate-100">
-              Desktop等の動画ファイルをドラッグ＆ドロップ
+            <p className="text-base sm:text-lg font-bold text-stone-900 tracking-wide">
+              動画をここにドロップしてください
             </p>
-            <p className="text-xs sm:text-sm text-slate-400">
-              またはクリックしてファイルを選択（iPhone 4K HDR MOV, MP4, WebM完全対応）
+            <p className="text-xs sm:text-sm text-stone-500">
+              またはタップしてカメラロール・フォルダから選択
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500 pt-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>Apple Silicon ハードウェア支援による4K高精細フレーム抽出</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 text-[11px] text-stone-600 font-medium">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>iPhone 4K HDR・MOV・MP4 完全対応 / プライバシー完全保護</span>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions & Settings */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Quick Actions & Precision Settings */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Desktop Direct Test Button */}
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-2">
+        <div className="p-4 rounded-2xl bg-white border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-2">
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
-              <Film className="w-4 h-4 text-amber-400" />
-              <span>デスクトップ動画テスト</span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-stone-900">
+              <Film className="w-3.5 h-3.5 text-amber-600" />
+              <span>デスクトップ動画</span>
             </div>
-            <p className="text-[11px] text-slate-400 truncate" title="IMG_8198 2.mov">
-              IMG_8198 2.mov を直接テスト
+            <p className="text-[11px] text-stone-500 truncate" title="IMG_8198 2.mov">
+              IMG_8198 2.mov を直接開く
             </p>
           </div>
           <button
@@ -164,21 +169,21 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               handleDesktopDirectTest();
             }}
             disabled={isProcessing}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-stone-950 bg-gradient-to-r from-amber-300 to-amber-200 hover:from-amber-400 hover:to-amber-300 rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer"
           >
             <span>この動画を即テスト</span>
           </button>
         </div>
 
         {/* Sample Demo Button */}
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-2">
+        <div className="p-4 rounded-2xl bg-white border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-2">
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
-              <PlayCircle className="w-4 h-4 text-amber-400" />
-              <span>内蔵サンプル動画</span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-stone-900">
+              <PlayCircle className="w-3.5 h-3.5 text-amber-600" />
+              <span>デモ動画で体験</span>
             </div>
-            <p className="text-[11px] text-slate-400">
-              テスト用動画をブラウザで生成
+            <p className="text-[11px] text-stone-500">
+              テスト用動画を自動生成
             </p>
           </div>
           <button
@@ -188,21 +193,21 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               handleSampleDemo();
             }}
             disabled={isProcessing || isGeneratingSample}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-750 active:bg-slate-700 border border-slate-700 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl border border-stone-200 transition-all disabled:opacity-50 cursor-pointer"
           >
             <span>{isGeneratingSample ? '生成中...' : 'サンプルで体験'}</span>
           </button>
         </div>
 
-        {/* Burst Settings */}
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-2">
+        {/* Precision Setting */}
+        <div className="p-4 rounded-2xl bg-white border border-stone-200/80 shadow-xs flex flex-col justify-between space-y-2">
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
-              <Sliders className="w-4 h-4 text-slate-400" />
-              <span>連写設定</span>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-stone-900">
+              <Sliders className="w-3.5 h-3.5 text-stone-500" />
+              <span>連写の密度設定</span>
             </div>
-            <p className="text-[11px] text-slate-400">
-              コマ間隔と最大切り出し枚数
+            <p className="text-[11px] text-stone-500">
+              コマを切り出す細かさ
             </p>
           </div>
 
@@ -211,7 +216,7 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               value={intervalSeconds}
               onChange={(e) => setIntervalSeconds(parseFloat(e.target.value))}
               disabled={isProcessing}
-              className="flex-1 text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
+              className="flex-1 text-xs bg-stone-100 border border-stone-200 text-stone-800 rounded-lg px-2 py-1.5 focus:outline-none focus:border-amber-400 cursor-pointer"
             >
               <option value={0.1}>0.10秒（超密）</option>
               <option value={0.15}>0.15秒（標準）</option>
@@ -222,22 +227,22 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               value={maxFrames}
               onChange={(e) => setMaxFrames(parseInt(e.target.value, 10))}
               disabled={isProcessing}
-              className="flex-1 text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
+              className="flex-1 text-xs bg-stone-100 border border-stone-200 text-stone-800 rounded-lg px-2 py-1.5 focus:outline-none focus:border-amber-400 cursor-pointer"
             >
-              <option value={30}>30コマ</option>
-              <option value={45}>45コマ</option>
-              <option value={60}>60コマ</option>
+              <option value={30}>30枚</option>
+              <option value={45}>45枚</option>
+              <option value={60}>60枚</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Usage Tips */}
-      <div className="flex items-start gap-2 p-3.5 rounded-lg bg-slate-900/40 border border-slate-800/80 text-xs text-slate-400">
-        <Info className="w-4 h-4 text-amber-500/80 shrink-0 mt-0.5" />
+      {/* Gentle Tips */}
+      <div className="p-3.5 rounded-2xl bg-stone-100/70 border border-stone-200/60 text-xs text-stone-600 flex items-start gap-2">
+        <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
         <div>
-          <span className="font-semibold text-slate-300">iPhone HDR / 4K動画対応: </span>
-          iPhoneで撮影された4K HDR (Dolby Vision) MOV動画も、ネイティブ映像エンジンにより完全な色再現度と鮮明さでフレーム抽出されます。
+          <span className="font-semibold text-stone-800">おすすめの使い方: </span>
+          スマホで数秒〜十数秒撮影した自撮り・笑顔・おでかけ・ペット・推しの動画をそのまま入れてみてください。ブレのない奇跡の笑顔や決定的な瞬間を自動で見つけ出します。
         </div>
       </div>
     </div>
