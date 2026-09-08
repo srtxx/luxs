@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { UploadCloud, PlayCircle, Sliders, ShieldCheck, Film, Info } from 'lucide-react';
+import { UploadCloud, PlayCircle, Sliders, ShieldCheck, Film, Info, AlertTriangle } from 'lucide-react';
 import { generateSampleVideo } from '@/lib/sample-video';
 
 interface DropZoneProps {
@@ -14,7 +14,24 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
   const [intervalSeconds, setIntervalSeconds] = useState(0.15);
   const [maxFrames, setMaxFrames] = useState(45);
   const [isGeneratingSample, setIsGeneratingSample] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isValidVideoFile = (file: File): boolean => {
+    const name = file.name.toLowerCase();
+    const isVideoExt = /\.(mp4|mov|webm|m4v|mkv|avi|ogv)$/i.test(name);
+    const isVideoMime = file.type.startsWith('video/');
+    return isVideoExt || isVideoMime;
+  };
+
+  const processSelectedFile = (file: File) => {
+    setFileError(null);
+    if (isValidVideoFile(file)) {
+      onVideoSelected(file, { intervalSeconds, maxFrames });
+    } else {
+      setFileError('選択されたファイルは対応動画形式（MP4, MOV, WebM等）ではありません。');
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -29,28 +46,30 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    if (isProcessing) return;
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (file.type.startsWith('video/') || file.name.endsWith('.mov') || file.name.endsWith('.mp4')) {
-        onVideoSelected(file, { intervalSeconds, maxFrames });
-      }
+      processSelectedFile(file);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      onVideoSelected(file, { intervalSeconds, maxFrames });
+      processSelectedFile(file);
     }
   };
 
   const handleSampleDemo = async () => {
     try {
+      setFileError(null);
       setIsGeneratingSample(true);
       const sampleBlob = await generateSampleVideo();
       onVideoSelected(sampleBlob, { intervalSeconds: 0.1, maxFrames: 30 });
     } catch (err) {
       console.error('Failed to generate sample:', err);
+      setFileError('サンプル動画の生成に失敗しました。');
     } finally {
       setIsGeneratingSample(false);
     }
@@ -68,6 +87,13 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
         </p>
       </div>
 
+      {fileError && (
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>{fileError}</span>
+        </div>
+      )}
+
       {/* Main Drag & Drop Zone */}
       <div
         onDragOver={handleDragOver}
@@ -83,7 +109,7 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
         <input
           ref={fileInputRef}
           type="file"
-          accept="video/mp4,video/quicktime,video/webm,video/x-m4v,video/*"
+          accept="video/*,.mp4,.mov,.MOV,.webm,.m4v"
           className="hidden"
           onChange={handleFileChange}
           disabled={isProcessing}
@@ -125,9 +151,12 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
           </div>
           <button
             type="button"
-            onClick={handleSampleDemo}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSampleDemo();
+            }}
             disabled={isProcessing || isGeneratingSample}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-900 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 rounded-lg shadow-sm transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-900 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
           >
             <PlayCircle className="w-4 h-4" />
             <span>{isGeneratingSample ? '生成中...' : 'サンプルで体験'}</span>
@@ -146,12 +175,12 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <select
               value={intervalSeconds}
               onChange={(e) => setIntervalSeconds(parseFloat(e.target.value))}
               disabled={isProcessing}
-              className="text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500"
+              className="text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
             >
               <option value={0.1}>0.10秒（超密）</option>
               <option value={0.15}>0.15秒（標準）</option>
@@ -162,7 +191,7 @@ export const DropZone: React.FC<DropZoneProps> = ({ onVideoSelected, isProcessin
               value={maxFrames}
               onChange={(e) => setMaxFrames(parseInt(e.target.value, 10))}
               disabled={isProcessing}
-              className="text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500"
+              className="text-xs bg-slate-800 border border-slate-700 text-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-amber-500 cursor-pointer"
             >
               <option value={30}>30コマ</option>
               <option value={45}>45コマ</option>
