@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LUXS (Luxs)
 
-## Getting Started
+動画から連続フレーム（バースト）を高速展開し、AI画像解析でブレのない「奇跡の瞬間」を自動検出・高画質化するSNS特化型Webプロトタイプ。
 
-First, run the development server:
+---
 
+## 主な機能
+
+1. **完全ブラウザ完結（ローカル処理）**
+   - サーバーへの動画アップロードは不要。大容量動画（MP4, MOV, WebM）でも通信待ち時間ゼロで即座に解析可能。プライバシーも安全に保護されます。
+2. **自動バースト（連写）分解**
+   - 指定した間隔（0.10秒〜0.25秒）で動画フレームを連続キャプチャし、フィルムストリップ形式でタイムライン展開。
+3. **AIスマートスコアリング（ブレ・鮮明度・露出解析）**
+   - Laplacianエッジ分散解析（Variance of Laplacian）により被写体ブレ・手ブレのないフレームを判定。
+   - 露出・コントラスト・ヒストグラムを解析し、スコア上位を「BEST PICK」「RANK 2〜4」として自動推薦。
+4. **バーストフィルムストリップ＆前後コマ微調整**
+   - 全フレームのタイムライン閲覧、キーボード（左右矢印キー）やコマ送りボタンによる0.1秒単位の表情微調整。
+5. **高画質化レタッチ＆Before / After 比較スライダー**
+   - アンシャープマスク（輪郭復元）、明瞭度・マイクロコントラスト強調、肌スムーズ補正。
+   - ドラッグして元画像と補正後を見比べられるインタラクティブな比較スライダーUI。
+6. **SNSアスペクト比エクスポート**
+   - オリジナル比率、1:1（Instagram 正方形）、4:5（Instagram 縦型ポートレート）、9:16（Stories / TikTok / Reels）のプリセットでPNGダウンロード。
+
+---
+
+## 技術スタック
+
+- **フレームワーク**: Next.js 16 (App Router), React 19, TypeScript
+- **スタイリング**: Tailwind CSS v4
+- **アイコン**: Lucide Icons (SVG)
+- **画像・動画処理**: HTML5 Video, Canvas API (2D Context, ImageData), Web Audio / Media Streams
+
+---
+
+## 開発・ビルド手順
+
+### 開発サーバー起動
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### プロダクションビルド
+```bash
+npm run build
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### リントチェック
+```bash
+npm run lint
+```
