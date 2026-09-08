@@ -18,21 +18,21 @@ export const ProcessingProgress: React.FC<ProcessingProgressProps> = ({
   const isExtracting = stage === 'extracting';
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-4 select-none">
+    <div className="w-full h-full flex flex-col items-center justify-center p-4 select-none bg-[var(--background)] transition-colors duration-200">
       <div className="w-full max-w-sm space-y-4 text-center">
         <div className="space-y-1">
-          <p className="text-xs font-medium text-stone-300">
+          <p className="text-xs font-semibold text-[var(--foreground)] tracking-tight">
             {isExtracting ? 'フレームを展開中...' : 'ベストショットを検出中...'}
           </p>
-          <p className="text-[11px] font-mono text-stone-500 tabular-numbers">
+          <p className="text-[11px] font-mono text-[var(--foreground-muted)] tabular-numbers">
             {current} / {total} コマ
           </p>
         </div>
 
-        {/* Minimalist 2px progress bar */}
-        <div className="w-full h-1 bg-[#222222] rounded-full overflow-hidden">
+        {/* Minimalist 2px progress bar with accent */}
+        <div className="w-full h-1.5 bg-[var(--surface-border)] rounded-full overflow-hidden">
           <div
-            className="h-full bg-white transition-all duration-150 ease-out"
+            className="h-full bg-[var(--accent-primary)] transition-all duration-150 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>

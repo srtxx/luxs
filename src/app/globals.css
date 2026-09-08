@@ -1,13 +1,66 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0C0C0C;
-  --foreground: #F5F5F5;
-  --surface: #181818;
-  --surface-hover: #222222;
-  --surface-border: #282828;
-  --accent-blue: #3B82F6;
-  --accent-white: #FFFFFF;
+  /* Default: Luminous Warm (上品なウォームアイボリー & 上質シェルホワイト) */
+  --background: #FAF7F2;
+  --foreground: #221F1D;
+  --foreground-muted: #7A726B;
+  --surface: #FFFFFF;
+  --surface-subtle: #F3EFE9;
+  --surface-hover: #ECE6DE;
+  --surface-border: #E5DDD3;
+  --surface-border-strong: #D4C9BC;
+  --accent-primary: #D46B78;
+  --accent-primary-hover: #C05865;
+  --accent-primary-subtle: #FBECEE;
+  --accent-primary-text: #962F3C;
+  --track-bg: #EAE3D9;
+  --playhead-color: #221F1D;
+  --canvas-bg: #F0EAE1;
+  --elevation-studio: 0 1px 3px rgba(50, 30, 20, 0.04), 0 12px 32px -4px rgba(50, 30, 20, 0.08);
+  --elevation-card: 0 1px 2px rgba(50, 30, 20, 0.04), 0 6px 16px -2px rgba(50, 30, 20, 0.06);
+}
+
+[data-theme="blush"] {
+  /* Blush Nuance (柔らかな血色ピンクグレージュ) */
+  --background: #FCF6F7;
+  --foreground: #291F22;
+  --foreground-muted: #826E74;
+  --surface: #FFFFFF;
+  --surface-subtle: #F8EBEF;
+  --surface-hover: #F2DEE4;
+  --surface-border: #E8D3D9;
+  --surface-border-strong: #D9BDC6;
+  --accent-primary: #D65F72;
+  --accent-primary-hover: #C24A5E;
+  --accent-primary-subtle: #FDE8ED;
+  --accent-primary-text: #9E263B;
+  --track-bg: #EFE0E5;
+  --playhead-color: #291F22;
+  --canvas-bg: #F5E6EC;
+  --elevation-studio: 0 1px 3px rgba(60, 20, 30, 0.04), 0 12px 32px -4px rgba(60, 20, 30, 0.09);
+  --elevation-card: 0 1px 2px rgba(60, 20, 30, 0.04), 0 6px 16px -2px rgba(60, 20, 30, 0.06);
+}
+
+[data-theme="noir"] {
+  /* Studio Noir (研ぎ澄まされたモダン・スタジオダーク) */
+  --background: #0E0D0D;
+  --foreground: #F5F2F0;
+  --foreground-muted: #9E9692;
+  --surface: #181717;
+  --surface-subtle: #222020;
+  --surface-hover: #2C2929;
+  --surface-border: #333030;
+  --surface-border-strong: #454040;
+  --accent-primary: #E07A87;
+  --accent-primary-hover: #D46674;
+  --accent-primary-subtle: #3A1F24;
+  --accent-primary-text: #F7D4DA;
+  --track-bg: #1F1D1D;
+  --playhead-color: #FFFFFF;
+  --canvas-bg: #080808;
+  --elevation-studio: 0 1px 2px rgba(0, 0, 0, 0.6), 0 14px 36px -6px rgba(0, 0, 0, 0.85);
+  --elevation-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 20px -4px rgba(0, 0, 0, 0.7);
 }
 
 html, body {
@@ -22,6 +75,7 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
   -webkit-user-select: none;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* Tabular numbers for non-jittering timecodes and counts */
@@ -32,15 +86,20 @@ html, body {
 
 /* Multi-layer elevation for physical depth */
 .studio-elevation {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 12px 32px -6px rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--elevation-studio);
+  border: 1px solid var(--surface-border);
+}
+
+.studio-card-elevation {
+  box-shadow: var(--elevation-card);
+  border: 1px solid var(--surface-border);
 }
 
 .studio-border {
   border: 1px solid var(--surface-border);
 }
 
-/* Minimalist darkroom scrollbars */
+/* Minimalist scrollbars */
 ::-webkit-scrollbar {
   height: 4px;
   width: 4px;
@@ -51,10 +110,10 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333333;
+  background: var(--surface-border-strong);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555555;
+  background: var(--foreground-muted);
 }

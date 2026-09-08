@@ -121,18 +121,18 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
   return (
     <div className="w-full flex flex-col items-center gap-2 select-none">
       {/* Timecode and Index Indicator */}
-      <div className="w-full flex items-center justify-between px-1 text-xs text-stone-400 tabular-numbers">
+      <div className="w-full flex items-center justify-between px-1 text-xs text-[var(--foreground-muted)] tabular-numbers">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono tracking-wider text-stone-300 font-medium">
+          <span className="text-[11px] font-mono tracking-wider text-[var(--foreground)] font-semibold">
             {currentFrame ? `${currentFrame.timestamp.toFixed(2)}s` : '0.00s'}
           </span>
           {recommendedIndices.includes(currentIndex) && (
-            <span className="text-[10px] uppercase font-semibold tracking-wider text-amber-300 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/50">
+            <span className="text-[10px] uppercase font-semibold tracking-wider text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] px-2 py-0.5 rounded-md border border-[var(--accent-primary)]/40 shadow-2xs">
               おすすめ
             </span>
           )}
         </div>
-        <span className="text-[11px] font-mono text-stone-400">
+        <span className="text-[11px] font-mono text-[var(--foreground-muted)] font-medium">
           {currentIndex + 1} / {totalFrames}
         </span>
       </div>
@@ -145,7 +145,7 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         style={{ touchAction: 'none' }}
-        className="w-full relative h-16 sm:h-20 bg-[#161616] rounded-xl overflow-hidden cursor-ew-resize flex items-center border border-[#2A2A2A] studio-elevation"
+        className="w-full relative h-16 sm:h-20 bg-[var(--track-bg)] rounded-xl overflow-hidden cursor-ew-resize flex items-center border border-[var(--surface-border-strong)] studio-elevation transition-colors duration-200"
       >
         {/* Filmstrip Frame Sequence */}
         <div className="absolute inset-0 flex">
@@ -157,24 +157,24 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
               <div
                 key={frame.id}
                 style={{ width: `${100 / totalFrames}%` }}
-                className="h-full relative shrink-0 border-r border-[#262626]/70 overflow-hidden"
+                className="h-full relative shrink-0 border-r border-black/10 overflow-hidden"
               >
                 <img
                   src={frame.dataUrl}
                   alt=""
-                  className="w-full h-full object-cover pointer-events-none opacity-65"
+                  className="w-full h-full object-cover pointer-events-none opacity-80 hover:opacity-100 transition-opacity"
                   loading="lazy"
                   draggable={false}
                 />
 
                 {/* Recommended Indicator (Luminous dot with subtle halo) */}
                 {isRec && (
-                  <div className="absolute bottom-2 inset-x-0 mx-auto w-2 h-2 rounded-full bg-white ring-2 ring-amber-300/60 shadow-[0_0_6px_rgba(255,255,255,0.9)] pointer-events-none" />
+                  <div className="absolute bottom-2 inset-x-0 mx-auto w-2 h-2 rounded-full bg-white ring-2 ring-[var(--accent-primary)] shadow-md pointer-events-none" />
                 )}
 
                 {/* Favorite Dot Indicator */}
                 {isFav && !isRec && (
-                  <div className="absolute bottom-2 inset-x-0 mx-auto w-1.5 h-1.5 rounded-full bg-rose-500 shadow-xs pointer-events-none" />
+                  <div className="absolute bottom-2 inset-x-0 mx-auto w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] shadow-xs pointer-events-none" />
                 )}
               </div>
             );
@@ -190,13 +190,13 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
           }}
         >
           {/* Top Notch Pip */}
-          <div className="w-2.5 h-1 bg-white rounded-full shadow-xs -mt-0.5" />
+          <div className="w-3 h-1.5 bg-[var(--accent-primary)] rounded-full shadow-md -mt-0.5 border border-white/60" />
 
           {/* Central Line */}
-          <div className="w-[2.5px] h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.9)] rounded-full" />
+          <div className="w-[2.5px] h-full bg-[var(--accent-primary)] shadow-[0_0_8px_rgba(212,107,120,0.8)] rounded-full" />
 
           {/* Bottom Notch Pip */}
-          <div className="w-2.5 h-1 bg-white rounded-full shadow-xs -mb-0.5" />
+          <div className="w-3 h-1.5 bg-[var(--accent-primary)] rounded-full shadow-md -mb-0.5 border border-white/60" />
         </div>
       </div>
     </div>

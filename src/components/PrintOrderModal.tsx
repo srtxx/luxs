@@ -68,17 +68,17 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn select-none">
-      <div className="relative w-full max-w-xl bg-[#141414] rounded-2xl border border-[#282828] shadow-2xl text-stone-100 overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn select-none">
+      <div className="relative w-full max-w-xl bg-[var(--surface)] rounded-2xl border border-[var(--surface-border)] shadow-2xl text-[var(--foreground)] overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#242424]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--surface-border)] bg-[var(--surface-subtle)]">
           <div className="flex items-center gap-2">
-            <Package className="w-4 h-4 text-stone-400" />
-            <h2 className="text-sm font-semibold text-white">プリント注文</h2>
+            <Package className="w-4 h-4 opacity-70" />
+            <h2 className="text-sm font-semibold">プリント注文</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-stone-400 hover:text-white hover:bg-[#222222] transition-colors cursor-pointer"
+            className="p-1 rounded-md text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -87,19 +87,19 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-5 overflow-y-auto">
           {/* Product Tabs */}
-          <div className="grid grid-cols-3 gap-2 bg-[#1C1C1C] p-1 rounded-xl border border-[#282828]">
+          <div className="grid grid-cols-3 gap-2 bg-[var(--surface-subtle)] p-1 rounded-xl border border-[var(--surface-border)]">
             {PRODUCTS.map((p) => (
               <button
                 key={p.id}
                 onClick={() => setSelectedProduct(p.id)}
-                className={`py-2 px-2 rounded-lg text-center transition-colors cursor-pointer ${
+                className={`py-2 px-2 rounded-lg text-center transition-colors cursor-pointer border ${
                   selectedProduct === p.id
-                    ? 'bg-[#2A2A2A] text-white font-medium shadow-xs'
-                    : 'text-stone-400 hover:text-stone-200'
+                    ? 'bg-[var(--surface)] text-[var(--foreground)] border-[var(--accent-primary)]/40 font-semibold shadow-2xs'
+                    : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)] border-transparent'
                 }`}
               >
                 <div className="text-xs truncate">{p.title}</div>
-                <div className="text-[11px] font-mono text-stone-300 mt-0.5 tabular-numbers">
+                <div className="text-[11px] font-mono text-[var(--foreground)] mt-0.5 tabular-numbers font-medium">
                   ¥{p.price.toLocaleString()}
                 </div>
               </button>
@@ -107,9 +107,9 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
           </div>
 
           {/* Visual Mockup Preview */}
-          <div className="relative w-full h-56 bg-[#0A0A0A] rounded-xl flex items-center justify-center p-4 border border-[#222222] overflow-hidden">
+          <div className="relative w-full h-56 bg-[var(--canvas-bg)] rounded-xl flex items-center justify-center p-4 border border-[var(--surface-border)] overflow-hidden">
             {selectedProduct === 'acrylic' && (
-              <div className="relative w-36 aspect-3/4 rounded-lg overflow-hidden shadow-2xl border-2 border-white/20">
+              <div className="relative w-36 aspect-3/4 rounded-lg overflow-hidden shadow-2xl border-2 border-white/40">
                 <img
                   src={frame.dataUrl}
                   alt=""
@@ -124,11 +124,11 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
                 {[0, 1, 2].map((idx) => (
                   <div
                     key={idx}
-                    className={`w-28 bg-[#1E1E1E] p-1.5 pb-4 rounded-md shadow-lg border border-[#333333] ${
+                    className={`w-28 bg-[var(--surface)] p-1.5 pb-4 rounded-md shadow-lg border border-[var(--surface-border)] ${
                       idx === 0 ? '-rotate-6' : idx === 2 ? 'rotate-6' : 'rotate-0 z-10 scale-105'
                     }`}
                   >
-                    <div className="aspect-square w-full bg-[#111111] overflow-hidden rounded">
+                    <div className="aspect-square w-full bg-black/5 overflow-hidden rounded">
                       <img
                         src={frame.dataUrl}
                         alt=""
@@ -155,31 +155,31 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
 
           {/* Product Description */}
           <div className="space-y-1 text-xs">
-            <div className="flex items-center justify-between text-stone-300">
-              <span className="font-medium text-white">{currentProduct.title}</span>
-              <span className="text-[11px] text-stone-500 font-mono">{currentProduct.specs}</span>
+            <div className="flex items-center justify-between text-[var(--foreground)]">
+              <span className="font-semibold">{currentProduct.title}</span>
+              <span className="text-[11px] text-[var(--foreground-muted)] font-mono">{currentProduct.specs}</span>
             </div>
-            <p className="text-stone-400 leading-relaxed text-[11px]">
+            <p className="text-[var(--foreground-muted)] leading-relaxed text-[11px]">
               {currentProduct.description}
             </p>
           </div>
 
           {/* Quantity Selector */}
-          <div className="flex items-center justify-between pt-2 border-t border-[#242424] text-xs">
-            <span className="text-stone-400">数量</span>
-            <div className="flex items-center gap-2 bg-[#1C1C1C] border border-[#2A2A2A] rounded-lg px-2 py-1 tabular-numbers">
+          <div className="flex items-center justify-between pt-2 border-t border-[var(--surface-border)] text-xs">
+            <span className="text-[var(--foreground-muted)] font-medium">数量</span>
+            <div className="flex items-center gap-2 bg-[var(--surface-subtle)] border border-[var(--surface-border)] rounded-lg px-2 py-1 tabular-numbers">
               <button
                 type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-5 h-5 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer"
+                className="w-5 h-5 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-pointer font-bold"
               >
                 -
               </button>
-              <span className="w-6 text-center font-mono text-white">{quantity}</span>
+              <span className="w-6 text-center font-mono text-[var(--foreground)] font-semibold">{quantity}</span>
               <button
                 type="button"
                 onClick={() => setQuantity(Math.min(10, quantity + 1))}
-                className="w-5 h-5 flex items-center justify-center text-stone-400 hover:text-white cursor-pointer"
+                className="w-5 h-5 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-pointer font-bold"
               >
                 +
               </button>
@@ -188,10 +188,10 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
         </div>
 
         {/* Footer Order CTA */}
-        <div className="p-4 border-t border-[#242424] bg-[#161616] flex items-center justify-between">
+        <div className="p-4 border-t border-[var(--surface-border)] bg-[var(--surface-subtle)] flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-stone-500">合計（税込）</div>
-            <div className="text-base font-bold text-white font-mono tabular-numbers">
+            <div className="text-[10px] text-[var(--foreground-muted)]">合計（税込）</div>
+            <div className="text-base font-bold text-[var(--foreground)] font-mono tabular-numbers">
               ¥{totalPrice.toLocaleString()}
             </div>
           </div>
@@ -200,11 +200,11 @@ export const PrintOrderModal: React.FC<PrintOrderModalProps> = ({
             type="button"
             onClick={handleOrder}
             disabled={isOrdered}
-            className="flex items-center gap-1.5 py-2 px-5 rounded-lg text-xs font-semibold text-black bg-white hover:bg-stone-200 transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 py-2 px-5 rounded-lg text-xs font-semibold text-white bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
           >
             {isOrdered ? (
               <>
-                <Check className="w-4 h-4 text-black" />
+                <Check className="w-4 h-4 text-white" />
                 <span>完了</span>
               </>
             ) : (

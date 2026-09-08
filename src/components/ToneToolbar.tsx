@@ -5,7 +5,7 @@ import { EnhancementSettings } from '@/lib/image-enhancer';
 import { Package, Sliders } from 'lucide-react';
 import { triggerHapticTick } from '@/lib/haptics';
 
-export type TonePreset = 'clear' | 'natural' | 'film' | 'monochrome' | 'original';
+export type TonePreset = 'rosy' | 'pale' | 'glow' | 'clear' | 'film' | 'monochrome' | 'original';
 
 export interface ToneConfig {
   id: TonePreset;
@@ -16,30 +16,64 @@ export interface ToneConfig {
 
 export const TONE_PRESETS: ToneConfig[] = [
   {
+    id: 'rosy',
+    label: 'ロージー',
+    swatchClass: 'bg-gradient-to-tr from-rose-300 via-pink-200 to-amber-100',
+    settings: {
+      sharpness: 50,
+      clarity: 30,
+      brightness: 5,
+      contrast: 8,
+      saturation: 8,
+      smoothSkin: 40,
+      warmth: 8,
+      rose: 16,
+      upscale: 2,
+    },
+  },
+  {
+    id: 'pale',
+    label: 'ペール',
+    swatchClass: 'bg-gradient-to-tr from-sky-200 via-stone-100 to-rose-100',
+    settings: {
+      sharpness: 45,
+      clarity: 25,
+      brightness: 7,
+      contrast: 4,
+      saturation: -4,
+      smoothSkin: 35,
+      warmth: -4,
+      rose: 6,
+      upscale: 2,
+    },
+  },
+  {
+    id: 'glow',
+    label: 'グロウ',
+    swatchClass: 'bg-gradient-to-tr from-amber-200 via-orange-100 to-rose-200',
+    settings: {
+      sharpness: 40,
+      clarity: 20,
+      brightness: 6,
+      contrast: 6,
+      saturation: 10,
+      smoothSkin: 55,
+      warmth: 6,
+      rose: 10,
+      upscale: 2,
+    },
+  },
+  {
     id: 'clear',
     label: 'クリア',
     swatchClass: 'bg-gradient-to-tr from-sky-400 to-indigo-300',
     settings: {
       sharpness: 60,
       clarity: 40,
-      brightness: 6,
+      brightness: 5,
       contrast: 10,
       saturation: 10,
-      smoothSkin: 30,
-      upscale: 2,
-    },
-  },
-  {
-    id: 'natural',
-    label: 'ナチュラル',
-    swatchClass: 'bg-gradient-to-tr from-amber-400 to-orange-300',
-    settings: {
-      sharpness: 50,
-      clarity: 30,
-      brightness: 3,
-      contrast: 6,
-      saturation: 5,
-      smoothSkin: 20,
+      smoothSkin: 25,
       upscale: 2,
     },
   },
@@ -60,7 +94,7 @@ export const TONE_PRESETS: ToneConfig[] = [
   {
     id: 'monochrome',
     label: 'モノクロ',
-    swatchClass: 'bg-gradient-to-tr from-stone-200 to-stone-900',
+    swatchClass: 'bg-gradient-to-tr from-stone-200 to-stone-800',
     settings: {
       sharpness: 70,
       clarity: 50,
@@ -74,7 +108,7 @@ export const TONE_PRESETS: ToneConfig[] = [
   {
     id: 'original',
     label: '原画',
-    swatchClass: 'border border-stone-400 bg-transparent',
+    swatchClass: 'border border-[var(--surface-border-strong)] bg-transparent',
     settings: null,
   },
 ];
@@ -105,10 +139,10 @@ export const ToneToolbar: React.FC<ToneToolbarProps> = ({
     <div className="w-full flex flex-col gap-2 select-none">
       {/* Upper row: Intensity slider (appears when a filter is active) */}
       {!isOriginal && (
-        <div className="flex items-center justify-between gap-3 px-2 text-xs text-stone-400 animate-fadeIn">
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <Sliders className="w-3 h-3 text-stone-500" />
-            <span>強さ</span>
+        <div className="flex items-center justify-between gap-3 px-2 text-xs text-[var(--foreground-muted)] animate-fadeIn">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium">
+            <Sliders className="w-3.5 h-3.5 opacity-70" />
+            <span>補正の強さ</span>
           </div>
 
           <div className="flex-1 max-w-xs flex items-center gap-2">
@@ -121,9 +155,9 @@ export const ToneToolbar: React.FC<ToneToolbarProps> = ({
                 onChangeIntensity(parseInt(e.target.value, 10));
                 triggerHapticTick(850, 0.02);
               }}
-              className="w-full h-1 bg-[#262626] rounded-full accent-white cursor-pointer"
+              className="w-full h-1.5 bg-[var(--surface-border)] rounded-full accent-[var(--accent-primary)] cursor-pointer"
             />
-            <span className="text-[11px] font-mono text-stone-400 w-8 text-right tabular-numbers">
+            <span className="text-[11px] font-mono text-[var(--foreground-muted)] w-8 text-right tabular-numbers font-medium">
               {toneIntensity}%
             </span>
           </div>
@@ -140,10 +174,10 @@ export const ToneToolbar: React.FC<ToneToolbarProps> = ({
                 key={tone.id}
                 type="button"
                 onClick={() => handleToneClick(tone.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer shrink-0 border ${
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 border ${
                   isSelected
-                    ? 'bg-[#262626] text-white border-stone-500 shadow-xs'
-                    : 'bg-[#151515] text-stone-400 hover:text-stone-200 hover:bg-[#1E1E1E] border-[#242424]'
+                    ? 'bg-[var(--surface)] text-[var(--foreground)] border-[var(--accent-primary)] shadow-xs ring-1 ring-[var(--accent-primary)]/30'
+                    : 'bg-[var(--surface-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] border-[var(--surface-border)]'
                 }`}
               >
                 {/* Visual mood swatch dot */}
@@ -158,10 +192,10 @@ export const ToneToolbar: React.FC<ToneToolbarProps> = ({
         <button
           type="button"
           onClick={onOpenPrintModal}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-stone-300 hover:text-white bg-[#181818] hover:bg-[#242424] border border-[#2A2A2A] transition-colors cursor-pointer shrink-0 shadow-xs"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] transition-colors cursor-pointer shrink-0 shadow-xs"
           title="アクリルブロックやカードとしてプリント注文"
         >
-          <Package className="w-3.5 h-3.5 text-stone-400" />
+          <Package className="w-3.5 h-3.5 opacity-70" />
           <span>プリント</span>
         </button>
       </div>
