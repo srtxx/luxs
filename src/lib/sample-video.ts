@@ -12,11 +12,25 @@ export async function generateSampleVideo(): Promise<Blob> {
   if (!ctx) throw new Error('Canvas context not available');
 
   const stream = canvas.captureStream(30); // 30 fps
-  const recorder = new MediaRecorder(stream, {
-    mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-      ? 'video/webm;codecs=vp9'
-      : 'video/webm',
-  });
+
+  let mimeType = '';
+  const candidates = [
+    'video/mp4',
+    'video/mp4;codecs=avc1',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+  ];
+  for (const candidate of candidates) {
+    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(candidate)) {
+      mimeType = candidate;
+      break;
+    }
+  }
+
+  const recorder = mimeType
+    ? new MediaRecorder(stream, { mimeType })
+    : new MediaRecorder(stream);
 
   const chunks: Blob[] = [];
   recorder.ondataavailable = (e) => {
@@ -93,7 +107,7 @@ export async function generateSampleVideo(): Promise<Blob> {
     };
 
     recorder.onstop = () => {
-      resolve(new Blob(chunks, { type: 'video/webm' }));
+      resolve(new Blob(chunks, { type: recorder.mimeType || 'video/mp4' }));
     };
 
     render();

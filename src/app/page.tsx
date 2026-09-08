@@ -381,9 +381,9 @@ export default function Home() {
           </div>
 
           {/* Bottom Console: Scrubber + Tone Toolbar */}
-          <div className="w-full max-w-3xl mx-auto px-4 pb-4 shrink-0">
+          <div className="w-full max-w-3xl mx-auto px-4 pb-4 shrink-0 space-y-2">
             {/* Mobile Tab Switcher */}
-            <div className="sm:hidden flex items-center justify-center mb-2">
+            <div className="sm:hidden flex items-center justify-center">
               <div className="flex items-center gap-0.5 bg-[var(--surface-subtle)] p-0.5 rounded-lg border border-[var(--surface-border)]">
                 <button
                   type="button"
@@ -410,28 +410,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Mobile: Switch between Scrubber and Tone */}
-            <div className="sm:hidden">
-              {mobileTab === 'scrub' ? (
-                <TactileScrubber
-                  frames={frames}
-                  currentIndex={currentIndex}
-                  onIndexChange={setCurrentIndex}
-                  recommendedIndices={recommendedIndices}
-                  favoritedIds={favoritedIds}
-                />
-              ) : (
-                <ToneToolbar
-                  currentTone={currentTone}
-                  onSelectTone={setCurrentTone}
-                  toneIntensity={toneIntensity}
-                  onChangeIntensity={setToneIntensity}
-                />
-              )}
-            </div>
-
-            {/* Desktop / Tablet: Both displayed simultaneously */}
-            <div className="hidden sm:block space-y-2">
+            {/* Scrubber (Always visible on desktop, tabbed on mobile) */}
+            <div className={mobileTab === 'scrub' ? 'block' : 'hidden sm:block'}>
               <TactileScrubber
                 frames={frames}
                 currentIndex={currentIndex}
@@ -439,7 +419,10 @@ export default function Home() {
                 recommendedIndices={recommendedIndices}
                 favoritedIds={favoritedIds}
               />
+            </div>
 
+            {/* Tone Toolbar (Always visible on desktop, tabbed on mobile) */}
+            <div className={mobileTab === 'tone' ? 'block' : 'hidden sm:block'}>
               <ToneToolbar
                 currentTone={currentTone}
                 onSelectTone={setCurrentTone}

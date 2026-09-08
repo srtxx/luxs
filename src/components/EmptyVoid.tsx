@@ -84,6 +84,14 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({
     }
   };
 
+  const handleDesktopDirectTest = () => {
+    setFileError(null);
+    onVideoSelected('/Users/suganuma_ryohei/Desktop/IMG_8198 2.mov', {
+      intervalSeconds,
+      maxFrames,
+    });
+  };
+
   return (
     <div className="w-full h-full flex flex-col justify-between select-none relative overflow-hidden bg-[var(--background)] transition-colors duration-200">
       {/* 1. Permanent Studio Header */}
@@ -204,14 +212,28 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({
           {/* Primary Action Button */}
           <button
             type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
             className="px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-hover)] tactile-btn shadow-sm cursor-pointer"
           >
             ファイルを選択
           </button>
         </div>
 
-        {/* Demo Option */}
-        <div className="flex items-center justify-center mt-6 z-10">
+        {/* Demo & Test Options */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-6 z-10">
+          <button
+            type="button"
+            onClick={handleDesktopDirectTest}
+            disabled={isProcessing}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
+          >
+            <Film className="w-3.5 h-3.5 opacity-70" />
+            <span>テスト実機動画（IMG_8198 2.mov）</span>
+          </button>
+
           <button
             type="button"
             onClick={handleSampleDemo}
