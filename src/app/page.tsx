@@ -10,6 +10,8 @@ import { ToneToolbar, TonePreset, TONE_PRESETS } from '@/components/ToneToolbar'
 import { PrintOrderModal } from '@/components/PrintOrderModal';
 import { ProModal } from '@/components/ProModal';
 import { ContactSheetModal } from '@/components/ContactSheetModal';
+import { CollageModal } from '@/components/CollageModal';
+import { LiveLoopModal } from '@/components/LiveLoopModal';
 import { extractBurstFrames, BurstFrame } from '@/lib/video-burst';
 import { scoreAllFrames } from '@/lib/image-scoring';
 import { enhanceImage } from '@/lib/image-enhancer';
@@ -44,6 +46,8 @@ export default function Home() {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false);
+  const [isCollageModalOpen, setIsCollageModalOpen] = useState(false);
+  const [isLiveLoopModalOpen, setIsLiveLoopModalOpen] = useState(false);
 
   // Sync theme with DOM attribute
   useEffect(() => {
@@ -284,7 +288,9 @@ export default function Home() {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.key === 'Escape') {
-        if (isContactSheetOpen) setIsContactSheetOpen(false);
+        if (isCollageModalOpen) setIsCollageModalOpen(false);
+        else if (isLiveLoopModalOpen) setIsLiveLoopModalOpen(false);
+        else if (isContactSheetOpen) setIsContactSheetOpen(false);
         else if (isPrintModalOpen) setIsPrintModalOpen(false);
         else if (isProModalOpen) setIsProModalOpen(false);
         else handleCancel();
@@ -292,7 +298,9 @@ export default function Home() {
         const isAnyModalOpen =
           isContactSheetOpen ||
           isPrintModalOpen ||
-          isProModalOpen;
+          isProModalOpen ||
+          isCollageModalOpen ||
+          isLiveLoopModalOpen;
         if (!isAnyModalOpen) {
           handleSavePng();
         }
@@ -308,6 +316,8 @@ export default function Home() {
     isContactSheetOpen,
     isPrintModalOpen,
     isProModalOpen,
+    isCollageModalOpen,
+    isLiveLoopModalOpen,
   ]);
 
   return (
@@ -347,6 +357,8 @@ export default function Home() {
             isSavingAll={isSavingAll}
             isCopying={isCopying}
             onOpenContactSheet={() => setIsContactSheetOpen(true)}
+            onOpenCollage={() => setIsCollageModalOpen(true)}
+            onOpenLiveLoop={() => setIsLiveLoopModalOpen(true)}
             theme={theme}
             onSelectTheme={handleSelectTheme}
             favoritedCount={favoritedIds.length}
@@ -411,6 +423,25 @@ export default function Home() {
           frame={currentFrame}
         />
       )}
+
+      {/* Collage (組写真) Modal */}
+      <CollageModal
+        isOpen={isCollageModalOpen}
+        onClose={() => setIsCollageModalOpen(false)}
+        frames={frames}
+        favoritedIds={favoritedIds}
+        enhancedUrl={enhancedUrl}
+        currentFrameId={currentFrame?.id || ''}
+      />
+
+      {/* Live Loop (ショートループ動画) Modal */}
+      <LiveLoopModal
+        isOpen={isLiveLoopModalOpen}
+        onClose={() => setIsLiveLoopModalOpen(false)}
+        frames={frames}
+        currentIndex={currentIndex}
+        aspectRatio={aspectRatio}
+      />
 
       {/* Pro Modal */}
       <ProModal

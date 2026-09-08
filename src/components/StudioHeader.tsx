@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AspectRatio } from './StudioCanvas';
-import { Download, Archive, X, LayoutGrid, Copy, Sun, Palette, Moon, Heart } from 'lucide-react';
+import { Download, Archive, X, LayoutGrid, Copy, Sun, Palette, Moon, Heart, Grid2X2, Repeat } from 'lucide-react';
 import { triggerHapticTick } from '@/lib/haptics';
 
 export type AppTheme = 'luminous' | 'blush' | 'noir';
@@ -18,6 +18,8 @@ interface StudioHeaderProps {
   isSavingAll: boolean;
   isCopying: boolean;
   onOpenContactSheet: () => void;
+  onOpenCollage: () => void;
+  onOpenLiveLoop: () => void;
   theme: AppTheme;
   onSelectTheme: (theme: AppTheme) => void;
   favoritedCount: number;
@@ -41,6 +43,8 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
   isSavingAll,
   isCopying,
   onOpenContactSheet,
+  onOpenCollage,
+  onOpenLiveLoop,
   theme,
   onSelectTheme,
   favoritedCount,
@@ -84,10 +88,32 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
             <span className="tabular-numbers font-medium">{favoritedCount}</span>
           </button>
         )}
+
+        {/* Collage (組写真) Button */}
+        <button
+          type="button"
+          onClick={onOpenCollage}
+          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] transition-colors cursor-pointer shadow-2xs"
+          title="お気に入りコマで組写真（コラージュ）を作成"
+        >
+          <Grid2X2 className="w-3.5 h-3.5 opacity-70" />
+          <span className="hidden md:inline">組写真</span>
+        </button>
+
+        {/* Live Loop (ループ動画) Button */}
+        <button
+          type="button"
+          onClick={onOpenLiveLoop}
+          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] transition-colors cursor-pointer shadow-2xs"
+          title="Live Photo風ループ動画を書き出し"
+        >
+          <Repeat className="w-3.5 h-3.5 opacity-70" />
+          <span className="hidden md:inline">ループ動画</span>
+        </button>
       </div>
 
       {/* Center: Aspect Ratio Selector */}
-      <div className="hidden md:flex items-center gap-0.5 bg-[var(--surface-subtle)] p-0.5 rounded-lg border border-[var(--surface-border)]">
+      <div className="hidden lg:flex items-center gap-0.5 bg-[var(--surface-subtle)] p-0.5 rounded-lg border border-[var(--surface-border)]">
         {RATIOS.map((r) => {
           const isSelected = aspectRatio === r.id;
           return (
