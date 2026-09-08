@@ -5,7 +5,7 @@ import { EnhancementSettings } from '@/lib/image-enhancer';
 import { Sliders } from 'lucide-react';
 import { triggerHapticTick } from '@/lib/haptics';
 
-export type TonePreset = 'rosy' | 'pale' | 'glow' | 'clear' | 'film' | 'monochrome' | 'original';
+export type TonePreset = 'natural' | 'clear' | 'rosy' | 'pale' | 'film' | 'monochrome' | 'original';
 
 export interface ToneConfig {
   id: TonePreset;
@@ -16,17 +16,49 @@ export interface ToneConfig {
 
 export const TONE_PRESETS: ToneConfig[] = [
   {
+    id: 'natural',
+    label: 'ナチュラル',
+    swatchClass: 'bg-gradient-to-tr from-amber-200 via-orange-100 to-rose-200',
+    settings: {
+      sharpness: 40,
+      clarity: 20,
+      brightness: 6,
+      contrast: 6,
+      saturation: 8,
+      smoothSkin: 50,
+      warmth: 4,
+      rose: 8,
+      upscale: 2,
+    },
+  },
+  {
+    id: 'clear',
+    label: 'クリア',
+    swatchClass: 'bg-gradient-to-tr from-sky-400 to-indigo-300',
+    settings: {
+      sharpness: 55,
+      clarity: 35,
+      brightness: 7,
+      contrast: 8,
+      saturation: 6,
+      smoothSkin: 35,
+      warmth: -2,
+      rose: 4,
+      upscale: 2,
+    },
+  },
+  {
     id: 'rosy',
     label: 'ロージー',
     swatchClass: 'bg-gradient-to-tr from-rose-300 via-pink-200 to-amber-100',
     settings: {
-      sharpness: 50,
-      clarity: 30,
+      sharpness: 45,
+      clarity: 25,
       brightness: 5,
       contrast: 8,
       saturation: 8,
       smoothSkin: 40,
-      warmth: 8,
+      warmth: 6,
       rose: 16,
       upscale: 2,
     },
@@ -37,43 +69,13 @@ export const TONE_PRESETS: ToneConfig[] = [
     swatchClass: 'bg-gradient-to-tr from-sky-200 via-stone-100 to-rose-100',
     settings: {
       sharpness: 45,
-      clarity: 25,
-      brightness: 7,
+      clarity: 20,
+      brightness: 8,
       contrast: 4,
       saturation: -4,
       smoothSkin: 35,
       warmth: -4,
       rose: 6,
-      upscale: 2,
-    },
-  },
-  {
-    id: 'glow',
-    label: 'グロウ',
-    swatchClass: 'bg-gradient-to-tr from-amber-200 via-orange-100 to-rose-200',
-    settings: {
-      sharpness: 40,
-      clarity: 20,
-      brightness: 6,
-      contrast: 6,
-      saturation: 10,
-      smoothSkin: 55,
-      warmth: 6,
-      rose: 10,
-      upscale: 2,
-    },
-  },
-  {
-    id: 'clear',
-    label: 'クリア',
-    swatchClass: 'bg-gradient-to-tr from-sky-400 to-indigo-300',
-    settings: {
-      sharpness: 60,
-      clarity: 40,
-      brightness: 5,
-      contrast: 10,
-      saturation: 10,
-      smoothSkin: 25,
       upscale: 2,
     },
   },

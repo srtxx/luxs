@@ -28,7 +28,7 @@ export default function Home() {
   const [frames, setFrames] = useState<BurstFrame[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [favoritedIds, setFavoritedIds] = useState<string[]>([]);
-  const [currentTone, setCurrentTone] = useState<TonePreset>('rosy');
+  const [currentTone, setCurrentTone] = useState<TonePreset>('natural');
   const [toneIntensity, setToneIntensity] = useState(100);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('original');
   const [enhancedUrl, setEnhancedUrl] = useState<string | null>(null);

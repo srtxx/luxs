@@ -120,24 +120,46 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center gap-2 select-none">
-      {/* Timecode and Index Indicator */}
+      {/* Header row: Timecode, Quick Recommended Jump Pills, and Frame counter */}
       <div className="w-full flex items-center justify-between px-1 text-xs text-[var(--foreground-muted)] tabular-numbers">
+        {/* Left: Timestamp & Current Frame Status */}
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono tracking-wider text-[var(--foreground)] font-semibold">
+          <span className="text-[11px] font-medium tracking-wider text-[var(--foreground)]">
             {currentFrame ? `${currentFrame.timestamp.toFixed(2)}s` : '0.00s'}
           </span>
           {recommendedIndices.includes(currentIndex) && (
-            <span className="text-[10px] uppercase font-semibold tracking-wider text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] px-2 py-0.5 rounded-md border border-[var(--accent-primary)]/40 shadow-2xs">
-              おすすめ
+            <span className="text-[10px] font-medium text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] px-2 py-0.5 rounded-md border border-[var(--accent-primary)]/30">
+              おすすめ（高鮮明）
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2.5">
-          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-[var(--foreground-muted)]/80">
-            <span className="kbd-cap">←</span>
-            <span className="kbd-cap">→</span>
-          </span>
-          <span className="text-[11px] font-mono text-[var(--foreground-muted)] font-medium">
+
+        {/* Center/Right: Quick Recommendation Jump Chips */}
+        <div className="flex items-center gap-1.5">
+          {recommendedIndices.slice(0, 3).map((recIdx, idx) => {
+            const isSelected = currentIndex === recIdx;
+            const label = idx === 0 ? 'ベスト' : `候補${idx + 1}`;
+            return (
+              <button
+                key={recIdx}
+                type="button"
+                onClick={() => {
+                  onIndexChange(recIdx);
+                  triggerHapticTick(1350, 0.05);
+                }}
+                className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-[var(--accent-primary)] text-white shadow-2xs font-semibold'
+                    : 'bg-[var(--surface-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] border border-[var(--surface-border)]'
+                }`}
+                title={`おすすめコマ ${idx + 1} に移動`}
+              >
+                {label}
+              </button>
+            );
+          })}
+
+          <span className="text-[11px] text-[var(--foreground-muted)] font-medium pl-1">
             {currentIndex + 1} / {totalFrames}
           </span>
         </div>

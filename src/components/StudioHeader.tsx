@@ -109,18 +109,17 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           <span className="hidden sm:inline">閉じる</span>
         </button>
 
-        {/* Precision Metrology Pill (FRM & Timestamp) */}
+        {/* Clean Frame Indicator */}
         {currentIndex !== undefined && totalFrames !== undefined && (
-          <div className="hidden md:flex items-center gap-2 py-1 px-2.5 rounded-lg bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-[11px] font-mono text-[var(--foreground-muted)] tabular-numbers">
+          <div className="hidden md:flex items-center gap-1.5 py-1 px-2.5 rounded-lg bg-[var(--surface-subtle)] border border-[var(--surface-border)] text-[11px] text-[var(--foreground-muted)] tabular-numbers">
             <span className="text-[var(--foreground)] font-medium">
-              FRM {currentIndex + 1}
-              <span className="opacity-40">/{totalFrames}</span>
+              {currentIndex + 1}
+              <span className="opacity-40"> / {totalFrames}</span>
             </span>
             {currentTimestamp !== undefined && (
-              <>
-                <span className="opacity-30">|</span>
-                <span>{currentTimestamp.toFixed(2)}s</span>
-              </>
+              <span className="opacity-40 text-[10px]">
+                ({currentTimestamp.toFixed(2)}s)
+              </span>
             )}
           </div>
         )}
@@ -151,7 +150,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
       </div>
 
       {/* Right: Tools & Export Actions */}
-      <div className="flex items-center gap-2 sm:gap-2.5">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {/* Contact Sheet (All Frames Grid) Button */}
         <button
           type="button"
@@ -160,7 +159,7 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           title="全コマ一覧"
         >
           <LayoutGrid className="w-3.5 h-3.5 opacity-70" />
-          <span className="hidden md:inline">全コマ一覧</span>
+          <span className="hidden lg:inline">全コマ</span>
           {favoritedCount > 0 && (
             <span className="flex items-center gap-0.5 text-[10px] font-semibold text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] px-1.5 py-0.2 rounded-full border border-[var(--accent-primary)]/30">
               <Heart className="w-2.5 h-2.5 fill-current" />
@@ -169,7 +168,18 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           )}
         </button>
 
-        {/* Creation & Products Consolidated Menu */}
+        {/* Elevated: 4-Cut Collage Direct Action */}
+        <button
+          type="button"
+          onClick={onOpenCollage}
+          className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--surface-hover)] bg-[var(--surface-subtle)] border border-[var(--surface-border)] tactile-btn cursor-pointer shadow-2xs"
+          title="複数コマを並べて1枚の写真に"
+        >
+          <Grid2X2 className="w-3.5 h-3.5 text-[var(--accent-primary)]" />
+          <span className="hidden sm:inline">4カット組写真</span>
+        </button>
+
+        {/* More Options Dropdown (Live Loop, Physical Print Goods) */}
         <div className="relative" ref={toolsMenuRef}>
           <button
             type="button"
@@ -182,29 +192,14 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                 ? 'bg-[var(--surface-hover)] border-[var(--accent-primary)] text-[var(--foreground)]'
                 : 'bg-[var(--surface-subtle)] border-[var(--surface-border)] text-[var(--foreground)] hover:bg-[var(--surface-hover)]'
             }`}
-            title="組写真・ループ動画・プリント"
+            title="ループ動画・グッズプリント"
           >
-            <span>作成</span>
+            <span>その他</span>
             <ChevronDown className={`w-3 h-3 opacity-60 transition-transform ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isToolsMenuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-48 bg-[var(--surface)] border border-[var(--surface-border)] rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 animate-fadeIn text-[var(--foreground)]">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsToolsMenuOpen(false);
-                  onOpenCollage();
-                }}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs hover:bg-[var(--surface-hover)] text-left cursor-pointer transition-colors"
-              >
-                <Grid2X2 className="w-4 h-4 opacity-70" />
-                <div>
-                  <div className="font-medium">組写真</div>
-                  <div className="text-[10px] text-[var(--foreground-muted)]">複数コマを1枚に配置</div>
-                </div>
-              </button>
-
+            <div className="absolute right-0 top-full mt-1.5 w-52 bg-[var(--surface)] border border-[var(--surface-border)] rounded-xl shadow-xl p-1.5 z-50 flex flex-col gap-0.5 animate-fadeIn text-[var(--foreground)]">
               <button
                 type="button"
                 onClick={() => {
@@ -230,10 +225,10 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
                 }}
                 className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs hover:bg-[var(--surface-hover)] text-left cursor-pointer transition-colors"
               >
-                <Package className="w-4 h-4 opacity-70" />
+                <Package className="w-4 h-4 text-[var(--accent-primary)]" />
                 <div>
                   <div className="font-medium">プリント注文</div>
-                  <div className="text-[10px] text-[var(--foreground-muted)]">アクリルやカード印刷</div>
+                  <div className="text-[10px] text-[var(--foreground-muted)]">アクリルブロック・スクエアカード</div>
                 </div>
               </button>
             </div>
