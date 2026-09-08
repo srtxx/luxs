@@ -167,7 +167,7 @@ export default function Home() {
             />
 
             {/* Main Preview with Before/After Slider & Retouching */}
-            <EnhancePreview frame={selectedFrame} />
+            <EnhancePreview frame={selectedFrame} allFrames={frames} />
 
             {/* Burst Filmstrip Timeline */}
             <BurstFilmstrip
