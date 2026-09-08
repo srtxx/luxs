@@ -24,6 +24,7 @@ export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [favoritedIds, setFavoritedIds] = useState<string[]>([]);
   const [currentTone, setCurrentTone] = useState<TonePreset>('clear');
+  const [toneIntensity, setToneIntensity] = useState(100);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('original');
   const [enhancedUrl, setEnhancedUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -139,7 +140,7 @@ export default function Home() {
 
   const currentFrame = frames[currentIndex];
 
-  // Re-run image enhancement whenever current frame or tone changes
+  // Re-run image enhancement whenever current frame, tone, or intensity changes
   const runEnhancement = useCallback(async () => {
     if (!currentFrame) return;
 
@@ -150,18 +151,29 @@ export default function Home() {
     }
 
     try {
-      const res = await enhanceImage(currentFrame.dataUrl, matchedTone.settings);
+      const factor = toneIntensity / 100;
+      const effectiveSettings = {
+        sharpness: Math.round(matchedTone.settings.sharpness * factor),
+        clarity: Math.round(matchedTone.settings.clarity * factor),
+        brightness: Math.round(matchedTone.settings.brightness * factor),
+        contrast: Math.round(matchedTone.settings.contrast * factor),
+        saturation: Math.round(matchedTone.settings.saturation * factor),
+        smoothSkin: Math.round(matchedTone.settings.smoothSkin * factor),
+        upscale: matchedTone.settings.upscale,
+      };
+
+      const res = await enhanceImage(currentFrame.dataUrl, effectiveSettings);
       setEnhancedUrl(res.dataUrl);
     } catch {
       setEnhancedUrl(null);
     }
-  }, [currentFrame, currentTone]);
+  }, [currentFrame, currentTone, toneIntensity]);
 
   useEffect(() => {
     if (stage === 'ready' && currentFrame) {
       const timer = setTimeout(() => {
         runEnhancement();
-      }, 80);
+      }, 70);
       return () => clearTimeout(timer);
     }
   }, [stage, currentFrame, runEnhancement]);
@@ -287,6 +299,8 @@ export default function Home() {
             <ToneToolbar
               currentTone={currentTone}
               onSelectTone={setCurrentTone}
+              toneIntensity={toneIntensity}
+              onChangeIntensity={setToneIntensity}
               onOpenPrintModal={() => setIsPrintModalOpen(true)}
             />
           </div>

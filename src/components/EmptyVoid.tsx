@@ -30,7 +30,7 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({ onVideoSelected, isProcess
     if (isValidVideoFile(file)) {
       onVideoSelected(file, { intervalSeconds, maxFrames });
     } else {
-      setFileError('対応している動画ファイル（MP4, MOV, WebM）を選択してください。');
+      setFileError('対応している動画形式（MP4, MOV, WebM）を選択してください。');
     }
   };
 
@@ -82,7 +82,10 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({ onVideoSelected, isProcess
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-4 sm:p-8 select-none">
+    <div className="w-full h-full flex flex-col items-center justify-center p-6 sm:p-12 select-none relative overflow-hidden">
+      {/* Ambient warm darkroom light glow */}
+      <div className="absolute w-[600px] h-[600px] rounded-full bg-gradient-to-b from-stone-800/20 via-amber-950/10 to-transparent blur-3xl pointer-events-none -top-24" />
+
       <input
         ref={fileInputRef}
         type="file"
@@ -92,53 +95,66 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({ onVideoSelected, isProcess
         disabled={isProcessing}
       />
 
+      {/* Main Studio Drop Surface */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !isProcessing && fileInputRef.current?.click()}
-        className={`w-full max-w-xl p-10 sm:p-16 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col items-center justify-center space-y-6 ${
+        className={`w-full max-w-xl p-8 sm:p-12 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col items-center justify-center space-y-6 relative overflow-hidden studio-elevation ${
           isDragOver
-            ? 'border-white bg-[#1A1A1A] scale-[1.01]'
-            : 'border-[#262626] bg-[#121212] hover:border-[#404040] hover:bg-[#161616]'
+            ? 'border-stone-400 bg-[#1A1A1A] scale-[1.01]'
+            : 'border-[#282828] bg-[#141414]/90 hover:border-[#3E3E3E] hover:bg-[#181818]'
         }`}
       >
-        <div className="w-14 h-14 rounded-full bg-[#1C1C1C] border border-[#2E2E2E] flex items-center justify-center text-stone-300">
-          <Upload className="w-6 h-6" />
+        {/* Visual Film Strip / Frame Stacking Cue */}
+        <div className="flex items-center justify-center -space-x-3 mb-1">
+          <div className="w-14 h-18 rounded-lg bg-[#222222] border border-[#333333] shadow-md -rotate-6 transform opacity-60 flex items-center justify-center">
+            <Film className="w-4 h-4 text-stone-500" />
+          </div>
+          <div className="w-16 h-20 rounded-lg bg-[#282828] border border-[#444444] shadow-xl rotate-0 z-10 scale-105 flex flex-col items-center justify-center relative">
+            <Upload className="w-5 h-5 text-white" />
+            <div className="absolute bottom-2 w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
+          </div>
+          <div className="w-14 h-18 rounded-lg bg-[#222222] border border-[#333333] shadow-md rotate-6 transform opacity-60 flex items-center justify-center">
+            <Film className="w-4 h-4 text-stone-500" />
+          </div>
         </div>
 
+        {/* Action Title & Spec */}
         <div className="space-y-1.5 text-center">
-          <p className="text-base font-semibold text-white">
+          <h1 className="text-base sm:text-lg font-semibold text-white tracking-tight">
             動画をドロップ、または選択
-          </p>
-          <p className="text-xs text-stone-500">
-            MP4, MOV, WebM 対応（iPhone 4K HDR 自動最適化）
+          </h1>
+          <p className="text-xs text-stone-400 leading-relaxed max-w-sm">
+            iPhone 4K HDR・MOV・MP4 対応。ブレのないコマを自動検出し、高解像度写真として書き出します。
           </p>
         </div>
 
         {fileError && (
-          <p className="text-xs text-rose-400 bg-rose-950/40 px-3 py-1.5 rounded-md border border-rose-900/50">
+          <p className="text-xs text-rose-300 bg-rose-950/60 px-3 py-1.5 rounded-md border border-rose-900/60">
             {fileError}
           </p>
         )}
 
+        {/* Primary Action Button */}
         <button
           type="button"
-          className="px-5 py-2 rounded-lg text-xs font-semibold text-black bg-white hover:bg-stone-200 transition-colors cursor-pointer"
+          className="px-6 py-2.5 rounded-lg text-xs font-semibold text-black bg-white hover:bg-stone-200 transition-colors shadow-sm cursor-pointer"
         >
           ファイルを選択
         </button>
       </div>
 
-      {/* Quick Access Tests */}
-      <div className="flex items-center gap-3 mt-6">
+      {/* Direct Test Options */}
+      <div className="flex flex-wrap items-center justify-center gap-3 mt-8 z-10">
         <button
           type="button"
           onClick={handleDesktopDirectTest}
           disabled={isProcessing}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-stone-400 hover:text-white bg-[#161616] hover:bg-[#202020] border border-[#262626] transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium text-stone-300 hover:text-white bg-[#181818] hover:bg-[#222222] border border-[#2A2A2A] transition-colors cursor-pointer shadow-xs"
         >
-          <Film className="w-3.5 h-3.5" />
+          <Film className="w-3.5 h-3.5 text-stone-400" />
           <span>デスクトップ動画（IMG_8198 2.mov）</span>
         </button>
 
@@ -146,9 +162,9 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({ onVideoSelected, isProcess
           type="button"
           onClick={handleSampleDemo}
           disabled={isProcessing || isGeneratingSample}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-stone-400 hover:text-white bg-[#161616] hover:bg-[#202020] border border-[#262626] transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium text-stone-300 hover:text-white bg-[#181818] hover:bg-[#222222] border border-[#2A2A2A] transition-colors cursor-pointer shadow-xs"
         >
-          <Play className="w-3.5 h-3.5" />
+          <Play className="w-3.5 h-3.5 text-stone-400" />
           <span>{isGeneratingSample ? '生成中...' : 'デモ動画'}</span>
         </button>
       </div>
