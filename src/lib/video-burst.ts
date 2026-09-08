@@ -133,11 +133,25 @@ export async function extractBurstFrames(
     );
     const effectiveStartTime = Math.max(0, Math.min(startTime, effectiveEndTime));
 
-    // Generate timestamps
+    const totalDuration = Math.max(0.01, effectiveEndTime - effectiveStartTime);
+
+    // Calculate dynamic evenly-spaced timestamps across entire duration
     const timestamps: number[] = [];
-    for (let t = effectiveStartTime; t <= effectiveEndTime; t += intervalSeconds) {
-      timestamps.push(Math.round(t * 1000) / 1000);
-      if (timestamps.length >= maxFrames) break;
+    const naturalCount = Math.floor(totalDuration / intervalSeconds) + 1;
+
+    if (naturalCount <= maxFrames) {
+      // Short video: capture at fine interval (e.g. 0.15s)
+      for (let i = 0; i < naturalCount; i++) {
+        const t = Math.min(effectiveEndTime, effectiveStartTime + i * intervalSeconds);
+        timestamps.push(Math.round(t * 1000) / 1000);
+      }
+    } else {
+      // Long video: evenly sample maxFrames across entire duration from start to end
+      const step = totalDuration / (maxFrames - 1);
+      for (let i = 0; i < maxFrames; i++) {
+        const t = Math.min(effectiveEndTime, effectiveStartTime + i * step);
+        timestamps.push(Math.round(t * 1000) / 1000);
+      }
     }
 
     if (timestamps.length === 0) {

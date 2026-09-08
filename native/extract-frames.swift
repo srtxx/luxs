@@ -44,10 +44,19 @@ func main() {
   generator.maximumSize = CGSize(width: maxWidth, height: maxWidth)
 
   var timestamps: [Double] = []
-  var t: Double = 0.0
-  while t <= duration && timestamps.count < maxFrames {
-    timestamps.append((t * 1000).rounded() / 1000)
-    t += interval
+  let naturalCount = Int(floor(duration / interval)) + 1
+
+  if naturalCount <= maxFrames {
+    for i in 0..<naturalCount {
+      let t = min(duration, Double(i) * interval)
+      timestamps.append((t * 1000).rounded() / 1000)
+    }
+  } else {
+    let step = duration / Double(maxFrames - 1)
+    for i in 0..<maxFrames {
+      let t = min(duration, Double(i) * step)
+      timestamps.append((t * 1000).rounded() / 1000)
+    }
   }
 
   if timestamps.isEmpty {
