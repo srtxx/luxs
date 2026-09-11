@@ -2,13 +2,15 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { BurstFrame } from '@/lib/video-burst';
-import { Heart, ZoomIn, Columns2, Smartphone } from 'lucide-react';
+import { Heart, ZoomIn, Columns2, Smartphone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { triggerHapticTick } from '@/lib/haptics';
 
 export type AspectRatio = 'original' | '4:5' | '1:1' | '9:16';
 
 interface StudioCanvasProps {
   frame: BurstFrame;
+  prevFrame?: BurstFrame | null;
+  nextFrame?: BurstFrame | null;
   enhancedUrl: string | null;
   aspectRatio: AspectRatio;
   isFavorited: boolean;
@@ -17,6 +19,8 @@ interface StudioCanvasProps {
 
 export const StudioCanvas: React.FC<StudioCanvasProps> = ({
   frame,
+  prevFrame,
+  nextFrame,
   enhancedUrl,
   aspectRatio,
   isFavorited,
@@ -29,15 +33,21 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
   const [splitPos, setSplitPos] = useState(50); // percentage 0 - 100
   const [isSnsOverlay, setIsSnsOverlay] = useState(false);
 
+  // Flicker comparison (Blink Comparator) state
+  const [flickerFrame, setFlickerFrame] = useState<BurstFrame | null>(null);
+  const [flickerOffset, setFlickerOffset] = useState<string | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const splitDraggingRef = useRef(false);
   const rafIdRef = useRef<number | null>(null);
 
   // Press-and-hold (only active when not in split mode)
-  const activeUrl = !isSplitMode && isPressing ? frame.dataUrl : enhancedUrl || frame.dataUrl;
+  // Flicker frame takes highest precedence when user holds comparison trigger
+  const baseActiveUrl = !isSplitMode && isPressing ? frame.dataUrl : enhancedUrl || frame.dataUrl;
+  const activeUrl = flickerFrame ? flickerFrame.dataUrl : baseActiveUrl;
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (isSplitMode) return;
+    if (isSplitMode || flickerFrame) return;
     if (e.button === 0 && enhancedUrl) {
       setIsPressing(true);
     }
@@ -54,6 +64,38 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
     const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
     setLoupeOrigin({ x, y });
   };
+
+  // Keyboard shortcut for flicker comparison (Q = Prev, E = Next)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.repeat) return;
+
+      if ((e.key === 'q' || e.key === 'Q') && prevFrame) {
+        setFlickerFrame(prevFrame);
+        setFlickerOffset(`-${Math.abs(frame.timestamp - prevFrame.timestamp).toFixed(2)}s`);
+        triggerHapticTick(1050, 0.03);
+      } else if ((e.key === 'e' || e.key === 'E') && nextFrame) {
+        setFlickerFrame(nextFrame);
+        setFlickerOffset(`+${Math.abs(nextFrame.timestamp - frame.timestamp).toFixed(2)}s`);
+        triggerHapticTick(1050, 0.03);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'q' || e.key === 'Q' || e.key === 'e' || e.key === 'E') {
+        setFlickerFrame(null);
+        setFlickerOffset(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [frame, prevFrame, nextFrame]);
 
   // Split handle drag handling with Pointer Events & RAF
   const updateSplitPos = useCallback((clientX: number) => {
@@ -189,9 +231,17 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
         )}
 
         {/* Press-and-Hold Indicator Pill */}
-        {isPressing && !isSplitMode && (
+        {isPressing && !isSplitMode && !flickerFrame && (
           <div className="absolute top-3 inset-x-0 mx-auto w-max px-3 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/20 text-[11px] font-medium text-white shadow-lg pointer-events-none animate-fadeIn">
             元画像
+          </div>
+        )}
+
+        {/* Flicker Comparison Indicator Pill */}
+        {flickerFrame && (
+          <div className="absolute top-3 inset-x-0 mx-auto w-max px-3 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/20 text-[11px] font-medium text-white shadow-lg pointer-events-none animate-fadeIn flex items-center gap-1.5 tabular-numbers z-50">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>比較中 ({flickerOffset})</span>
           </div>
         )}
 
@@ -314,9 +364,74 @@ export const StudioCanvas: React.FC<StudioCanvasProps> = ({
           </button>
         </div>
 
+        {/* Bottom Floating Blink Comparator (Hold to compare adjacent frames) */}
+        {(prevFrame || nextFrame) && !isSplitMode && (
+          <div className="absolute bottom-3 inset-x-0 mx-auto w-max flex items-center gap-1.5 p-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 z-30 shadow-md">
+            {prevFrame && (
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  setFlickerFrame(prevFrame);
+                  setFlickerOffset(`-${Math.abs(frame.timestamp - prevFrame.timestamp).toFixed(2)}s`);
+                  triggerHapticTick(1050, 0.03);
+                }}
+                onPointerUp={() => {
+                  setFlickerFrame(null);
+                  setFlickerOffset(null);
+                }}
+                onPointerLeave={() => {
+                  setFlickerFrame(null);
+                  setFlickerOffset(null);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium transition-all cursor-pointer select-none ${
+                  flickerFrame === prevFrame
+                    ? 'bg-amber-400 text-stone-900 font-semibold shadow-xs'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                }`}
+                title="長押しで前のコマと比較（Qキー）"
+              >
+                <ChevronLeft className="w-3 h-3" />
+                <span>前コマ長押し</span>
+              </button>
+            )}
+
+            <div className="w-px h-3 bg-white/20" />
+
+            {nextFrame && (
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  setFlickerFrame(nextFrame);
+                  setFlickerOffset(`+${Math.abs(nextFrame.timestamp - frame.timestamp).toFixed(2)}s`);
+                  triggerHapticTick(1050, 0.03);
+                }}
+                onPointerUp={() => {
+                  setFlickerFrame(null);
+                  setFlickerOffset(null);
+                }}
+                onPointerLeave={() => {
+                  setFlickerFrame(null);
+                  setFlickerOffset(null);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium transition-all cursor-pointer select-none ${
+                  flickerFrame === nextFrame
+                    ? 'bg-amber-400 text-stone-900 font-semibold shadow-xs'
+                    : 'text-white/80 hover:text-white hover:bg-white/10'
+                }`}
+                title="長押しで次のコマと比較（Eキー）"
+              >
+                <span>次コマ長押し</span>
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Hint on hover */}
-        {!isPressing && !isLoupe && !isSplitMode && enhancedUrl && (
-          <div className="absolute bottom-3 inset-x-0 mx-auto w-max px-3 py-1 rounded-full bg-black/60 backdrop-blur-xs text-[10px] text-white/90 border border-white/10 opacity-0 group-hover:opacity-100 sm:hover:opacity-100 transition-opacity pointer-events-none">
+        {!isPressing && !isLoupe && !isSplitMode && !flickerFrame && enhancedUrl && (
+          <div className="absolute bottom-12 inset-x-0 mx-auto w-max px-3 py-1 rounded-full bg-black/60 backdrop-blur-xs text-[10px] text-white/90 border border-white/10 opacity-0 group-hover:opacity-100 sm:hover:opacity-100 transition-opacity pointer-events-none">
             長押しで元画像と比較
           </div>
         )}

@@ -421,6 +421,8 @@ export default function Home() {
           <div className="flex-1 w-full min-h-0 flex items-center justify-center overflow-hidden">
             <StudioCanvas
               frame={currentFrame}
+              prevFrame={currentIndex > 0 ? frames[currentIndex - 1] : null}
+              nextFrame={currentIndex < frames.length - 1 ? frames[currentIndex + 1] : null}
               enhancedUrl={enhancedUrl}
               aspectRatio={aspectRatio}
               isFavorited={favoritedIds.includes(currentFrame.id)}

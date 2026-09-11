@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { BurstFrame } from '@/lib/video-burst';
 import { triggerHapticTick } from '@/lib/haptics';
 
@@ -25,33 +25,23 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
   const targetIndexRef = useRef(currentIndex);
   const lastTickIndexRef = useRef(currentIndex);
 
+  // Dynamic Gear Scrubber refs
+  const dragStartYRef = useRef(0);
+  const dragStartXRef = useRef(0);
+  const anchorIndexRef = useRef(currentIndex);
+  const currentGearRef = useRef<1 | 0.5 | 0.25>(1);
+
+  // UI state for floating loupe & gear badge
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubGear, setScrubGear] = useState<1 | 0.5 | 0.25>(1);
+  const [loupeX, setLoupeX] = useState<number>(50); // percentage
+
   const totalFrames = frames.length;
 
   // Sync ref
   useEffect(() => {
     targetIndexRef.current = currentIndex;
   }, [currentIndex]);
-
-  // Compute frame index from pointer coordinate
-  const calculateIndexFromPointer = useCallback(
-    (clientX: number): number => {
-      if (!containerRef.current || totalFrames === 0) return 0;
-      const rect = containerRef.current.getBoundingClientRect();
-      const relativeX = clientX - rect.left;
-      const clampedX = Math.max(0, Math.min(relativeX, rect.width));
-      const ratio = clampedX / rect.width;
-      const rawIndex = Math.min(totalFrames - 1, Math.floor(ratio * totalFrames));
-
-      // Magnetic snapping to recommended frames (within 1-frame distance)
-      for (const recIdx of recommendedIndices) {
-        if (Math.abs(rawIndex - recIdx) <= 1 && Math.abs(ratio - (recIdx + 0.5) / totalFrames) < 0.035) {
-          return recIdx;
-        }
-      }
-      return rawIndex;
-    },
-    [totalFrames, recommendedIndices]
-  );
 
   const scheduleUpdate = useCallback(
     (newIndex: number) => {
@@ -72,21 +62,91 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
     [onIndexChange, recommendedIndices]
   );
 
+  // Calculate index with dynamic gear ratio based on vertical pointer distance
+  const calculateIndexFromPointer = useCallback(
+    (clientX: number, clientY: number): { index: number; gear: 1 | 0.5 | 0.25; percentX: number } => {
+      if (!containerRef.current || totalFrames === 0) {
+        return { index: 0, gear: 1, percentX: 50 };
+      }
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const relativeX = clientX - rect.left;
+      const clampedX = Math.max(0, Math.min(relativeX, rect.width));
+      const percentX = (clampedX / rect.width) * 100;
+
+      // Vertical offset: moving finger upwards reduces gear ratio for ultra-fine micro scrubbing
+      const deltaY = dragStartYRef.current - clientY;
+      let gear: 1 | 0.5 | 0.25 = 1;
+      if (deltaY > 65) {
+        gear = 0.25; // 1/4x micro step
+      } else if (deltaY > 25) {
+        gear = 0.5; // 1/2x fine step
+      }
+
+      let rawIndex: number;
+      if (gear === 1) {
+        // Absolute tracking
+        const ratio = clampedX / rect.width;
+        rawIndex = Math.min(totalFrames - 1, Math.floor(ratio * totalFrames));
+
+        // Magnetic snapping to recommended frames
+        for (const recIdx of recommendedIndices) {
+          if (Math.abs(rawIndex - recIdx) <= 1 && Math.abs(ratio - (recIdx + 0.5) / totalFrames) < 0.035) {
+            rawIndex = recIdx;
+            break;
+          }
+        }
+      } else {
+        // Relative high-precision micro scrubbing
+        const deltaX = clientX - dragStartXRef.current;
+        const indexShift = (deltaX / (rect.width / totalFrames)) * gear;
+        rawIndex = Math.max(0, Math.min(totalFrames - 1, Math.round(anchorIndexRef.current + indexShift)));
+      }
+
+      return { index: rawIndex, gear, percentX };
+    },
+    [totalFrames, recommendedIndices]
+  );
+
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     isDraggingRef.current = true;
+    dragStartYRef.current = e.clientY;
+    dragStartXRef.current = e.clientX;
+    anchorIndexRef.current = currentIndex;
+    currentGearRef.current = 1;
+
     e.currentTarget.setPointerCapture(e.pointerId);
-    const newIndex = calculateIndexFromPointer(e.clientX);
-    scheduleUpdate(newIndex);
+
+    const { index, gear, percentX } = calculateIndexFromPointer(e.clientX, e.clientY);
+    setIsScrubbing(true);
+    setScrubGear(gear);
+    setLoupeX(percentX);
+    scheduleUpdate(index);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
-    const newIndex = calculateIndexFromPointer(e.clientX);
-    scheduleUpdate(newIndex);
+    const { index, gear, percentX } = calculateIndexFromPointer(e.clientX, e.clientY);
+
+    if (currentGearRef.current !== gear) {
+      currentGearRef.current = gear;
+      setScrubGear(gear);
+      // Subtle tick when gear changes
+      triggerHapticTick(gear === 0.25 ? 1500 : 1200, 0.04);
+      // Re-anchor to prevent jumping
+      dragStartXRef.current = e.clientX;
+      anchorIndexRef.current = index;
+    }
+
+    setLoupeX(percentX);
+    scheduleUpdate(index);
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     isDraggingRef.current = false;
+    setIsScrubbing(false);
+    setScrubGear(1);
+    currentGearRef.current = 1;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {
@@ -94,19 +154,21 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
     }
   };
 
-  // Keyboard left/right arrow navigation
+  // Keyboard navigation
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
         e.preventDefault();
-        const next = Math.max(0, currentIndex - 1);
+        const step = e.shiftKey ? 5 : 1;
+        const next = Math.max(0, currentIndex - step);
         triggerHapticTick(950, 0.03);
         onIndexChange(next);
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         e.preventDefault();
-        const next = Math.min(frames.length - 1, currentIndex + 1);
+        const step = e.shiftKey ? 5 : 1;
+        const next = Math.min(frames.length - 1, currentIndex + step);
         triggerHapticTick(950, 0.03);
         onIndexChange(next);
       }
@@ -119,19 +181,25 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
   const currentFrame = frames[currentIndex];
 
   return (
-    <div className="w-full flex flex-col items-center gap-2 select-none">
-      {/* Header row: Timecode, Quick Recommended Jump Pills, and Frame counter */}
+    <div className="w-full flex flex-col items-center gap-1.5 select-none relative">
+      {/* 1. Header row: Metrology, Gear State, and Best Jump Chips */}
       <div className="w-full flex items-center justify-between px-1 text-xs text-[var(--foreground-muted)] tabular-numbers">
-        {/* Left: Timestamp & Current Frame Status */}
+        {/* Left: Timestamp & Active Mode */}
         <div className="flex items-center gap-2">
           <span className="text-[11px] font-medium tracking-wider text-[var(--foreground)]">
             {currentFrame ? `${currentFrame.timestamp.toFixed(2)}s` : '0.00s'}
           </span>
-          {recommendedIndices.includes(currentIndex) && (
-            <span className="text-[10px] font-medium text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] px-2 py-0.5 rounded-md border border-[var(--accent-primary)]/30">
-              おすすめ（高鮮明）
+
+          {/* Micro-Scrub Gear Badge (Appears when dragging upwards) */}
+          {isScrubbing && scrubGear < 1 ? (
+            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 animate-fadeIn">
+              {scrubGear === 0.25 ? '超微調整 (1/4x)' : '微調整 (1/2x)'}
             </span>
-          )}
+          ) : recommendedIndices.includes(currentIndex) ? (
+            <span className="text-[10px] font-medium text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] px-2 py-0.5 rounded-md border border-[var(--accent-primary)]/30">
+              おすすめ
+            </span>
+          ) : null}
         </div>
 
         {/* Center/Right: Quick Recommendation Jump Chips */}
@@ -147,7 +215,7 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
                   onIndexChange(recIdx);
                   triggerHapticTick(1350, 0.05);
                 }}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer ${
+                className={`px-2.5 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-[var(--accent-primary)] text-white shadow-2xs font-semibold'
                     : 'bg-[var(--surface-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] border border-[var(--surface-border)]'
@@ -159,13 +227,50 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
             );
           })}
 
-          <span className="text-[11px] text-[var(--foreground-muted)] font-medium pl-1">
+          <span className="text-[11px] text-[var(--foreground-muted)] font-medium pl-1.5 border-l border-[var(--surface-border)]">
             {currentIndex + 1} / {totalFrames}
           </span>
         </div>
       </div>
 
-      {/* Main Scrubber Film Track */}
+      {/* 2. Floating Tactile Loupe (Appears directly above scrubber during drag) */}
+      {isScrubbing && currentFrame && (
+        <div
+          className="absolute -top-28 z-50 pointer-events-none transition-all duration-75 ease-out"
+          style={{
+            left: `${Math.max(16, Math.min(84, loupeX))}%`,
+            transform: 'translateX(-50%)',
+          }}
+        >
+          {/* Concentric Border & Layered Shadow Loupe Bubble */}
+          <div className="relative flex flex-col items-center">
+            <div className="w-22 h-22 sm:w-26 sm:h-26 rounded-2xl p-1 bg-[var(--surface)] border border-[var(--surface-border-strong)] shadow-[0_16px_32px_-6px_rgba(0,0,0,0.28),0_4px_12px_-2px_rgba(0,0,0,0.12)] overflow-hidden">
+              <div className="w-full h-full rounded-xl overflow-hidden relative bg-black/5 flex items-center justify-center">
+                {/* Facial Detail Zoom (Scale 2.2x centered on subject) */}
+                <img
+                  src={currentFrame.dataUrl}
+                  alt=""
+                  className="w-full h-full object-cover transform scale-[2.2] object-center pointer-events-none"
+                  draggable={false}
+                />
+
+                {/* Sub-label Overlay */}
+                <div className="absolute bottom-1 inset-x-1 flex items-center justify-between px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-xs text-[9px] font-medium text-white tabular-numbers">
+                  <span>{currentFrame.timestamp.toFixed(2)}s</span>
+                  {scrubGear < 1 && (
+                    <span className="text-emerald-300 font-semibold">{scrubGear}x</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Downward Anchor Arrow Pip */}
+            <div className="w-2 h-2 bg-[var(--surface)] border-r border-b border-[var(--surface-border-strong)] rotate-45 -mt-1 shadow-xs" />
+          </div>
+        </div>
+      )}
+
+      {/* 3. Main Scrubber Film Track */}
       <div
         ref={containerRef}
         onPointerDown={handlePointerDown}
@@ -173,7 +278,7 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         style={{ touchAction: 'none' }}
-        className="w-full relative h-16 sm:h-20 bg-[var(--track-bg)] rounded-xl overflow-hidden cursor-ew-resize flex items-center border border-[var(--surface-border-strong)] studio-elevation transition-colors duration-200"
+        className="w-full relative h-15 sm:h-18 bg-[var(--track-bg)] rounded-xl overflow-hidden cursor-ew-resize flex items-center border border-[var(--surface-border)] studio-elevation transition-colors duration-200"
       >
         {/* Filmstrip Frame Sequence */}
         <div className="absolute inset-0 flex">
@@ -195,9 +300,9 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
                   draggable={false}
                 />
 
-                {/* Recommended Indicator (Luminous dot with subtle halo) */}
+                {/* Recommended Indicator */}
                 {isRec && (
-                  <div className="absolute bottom-2 inset-x-0 mx-auto w-2 h-2 rounded-full bg-white ring-2 ring-[var(--accent-primary)] shadow-md pointer-events-none" />
+                  <div className="absolute bottom-2 inset-x-0 mx-auto w-1.5 h-1.5 rounded-full bg-white ring-2 ring-[var(--accent-primary)] shadow-md pointer-events-none" />
                 )}
 
                 {/* Favorite Dot Indicator */}
@@ -221,11 +326,16 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
           <div className="w-3 h-1.5 bg-[var(--accent-primary)] rounded-full shadow-md -mt-0.5 border border-white/60" />
 
           {/* Central Line */}
-          <div className="w-[2.5px] h-full bg-[var(--accent-primary)] shadow-[0_0_8px_rgba(212,107,120,0.8)] rounded-full" />
+          <div className="w-[2px] h-full bg-[var(--accent-primary)] shadow-[0_0_8px_rgba(212,107,120,0.8)] rounded-full" />
 
           {/* Bottom Notch Pip */}
           <div className="w-3 h-1.5 bg-[var(--accent-primary)] rounded-full shadow-md -mb-0.5 border border-white/60" />
         </div>
+      </div>
+
+      {/* Gentle interaction cue for gear shifting */}
+      <div className="w-full flex items-center justify-center text-[9px] text-[var(--foreground-muted)] opacity-60">
+        <span>ドラッグ中に指を上へ引くと微調整モード（1/4x）</span>
       </div>
     </div>
   );

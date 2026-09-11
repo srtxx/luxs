@@ -222,60 +222,12 @@ export const EmptyVoid: React.FC<EmptyVoidProps> = ({
             </button>
           </div>
         </div>
-
-        {/* Visual Showcase Card: Video Blur -> Rescued Crisp Moment */}
-        <div
-          onClick={handleSampleDemo}
-          className="mt-6 w-full max-w-lg p-3 sm:p-3.5 rounded-2xl bg-[var(--surface-subtle)]/70 border border-[var(--surface-border)] hover:border-[var(--accent-primary)]/40 transition-all cursor-pointer group flex items-center justify-between gap-3 shadow-2xs"
-          title="クリックしてサンプル動画で体験"
-        >
-          {/* Visual Split Graphic */}
-          <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            {/* Left: Motion Blur Frame Simulation */}
-            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-stone-300 border border-[var(--surface-border)] shrink-0 flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-200/60 to-stone-400/80 blur-[2px] transform scale-110" />
-              <div className="relative z-10 w-5 h-5 rounded-full bg-white/40 blur-[1px]" />
-              <span className="absolute bottom-1 left-1 text-[8px] font-medium text-stone-700/80 bg-white/70 px-1 py-0.2 rounded">
-                ブレコマ
-              </span>
-            </div>
-
-            {/* Connecting transition pill */}
-            <div className="text-[10px] text-[var(--foreground-muted)] font-medium shrink-0 flex items-center">
-              →
-            </div>
-
-            {/* Right: Rescued Crisp Frame Simulation */}
-            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-stone-200 border border-[var(--accent-primary)]/40 shadow-xs shrink-0 flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-rose-100 to-amber-50" />
-              <div className="relative z-10 w-5 h-5 rounded-full bg-rose-300/80 shadow-xs border border-white/60" />
-              <span className="absolute bottom-1 right-1 text-[8px] font-semibold text-[var(--accent-primary-text)] bg-[var(--accent-primary-subtle)] px-1 py-0.2 rounded border border-[var(--accent-primary)]/30">
-                ベスト
-              </span>
-            </div>
-
-            {/* Text caption */}
-            <div className="min-w-0 flex-1 pl-1">
-              <div className="text-xs font-semibold text-[var(--foreground)] group-hover:text-[var(--accent-primary)] transition-colors truncate">
-                動画からブレのない瞬間を救出
-              </div>
-              <div className="text-[11px] text-[var(--foreground-muted)] truncate">
-                サンプル動画で仕上がりをすぐ試せます
-              </div>
-            </div>
-          </div>
-
-          {/* Right Action Hint */}
-          <div className="shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-medium text-[var(--foreground-muted)] group-hover:text-[var(--foreground)] bg-[var(--surface)] border border-[var(--surface-border)] shadow-2xs">
-            体験する
-          </div>
-        </div>
       </div>
 
-      {/* 3. Reassuring Privacy Footer */}
-      <footer className="w-full h-11 px-4 sm:px-6 flex items-center justify-center border-t border-[var(--surface-border)] bg-[var(--surface)] text-[11px] text-[var(--foreground-muted)] z-20 shrink-0">
-        <span className="opacity-80">
-          動画はお使いの端末内でのみ安全に処理されます。サーバーへの送信や保存は一切行われません。
+      {/* 3. Privacy Footer */}
+      <footer className="w-full h-10 px-4 sm:px-6 flex items-center justify-center border-t border-[var(--surface-border)] bg-[var(--surface)] text-[11px] text-[var(--foreground-muted)] z-20 shrink-0">
+        <span className="opacity-70">
+          動画は端末内でのみ処理されます。外部サーバーへの送信は行われません。
         </span>
       </footer>
     </div>
