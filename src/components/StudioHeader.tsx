@@ -311,12 +311,12 @@ export const StudioHeader: React.FC<StudioHeaderProps> = ({
           <span>{isCopying ? 'コピー中...' : 'コピー'}</span>
         </button>
 
-        {/* Zip Download */}
+        {/* Zip Download (Secondary action, desktop/tablet) */}
         <button
           type="button"
           onClick={onSaveAllZip}
           disabled={isSavingAll}
-          className="p-1.5 rounded-lg text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] tactile-btn cursor-pointer"
+          className="hidden sm:block p-1.5 rounded-lg text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] tactile-btn cursor-pointer"
           title="全コマ一括保存（ZIP）"
         >
           <Archive className="w-4 h-4" />

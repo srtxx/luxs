@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   let targetVideoPath: string | null = null;
   let interval = '0.15';
   let maxFrames = '45';
-  let maxWidth = '720';
+  let maxWidth = '1080';
 
   try {
     const contentType = req.headers.get('content-type') || '';

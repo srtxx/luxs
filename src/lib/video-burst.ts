@@ -27,18 +27,10 @@ export interface BurstExtractOptions {
  * Resolves Safari's blank/black frame issue by maintaining a valid viewport video element,
  * actively priming the GPU hardware decoder, and validating canvas frame buffers.
  */
-export async function extractBurstFrames(
-  videoSource: File | Blob | string,
-  options: BurstExtractOptions = {}
-): Promise<BurstFrame[]> {
-  const {
-    intervalSeconds = 0.15,
-    maxFrames = 45,
-    startTime = 0,
-    maxWidth = 1280,
-    onProgress,
-  } = options;
-
+async function createAndPrepareVideo(videoSource: File | Blob | string): Promise<{
+  video: HTMLVideoElement;
+  cleanup: () => void;
+}> {
   let url: string;
   let isCreatedUrl = false;
 
@@ -49,8 +41,6 @@ export async function extractBurstFrames(
     isCreatedUrl = true;
   }
 
-  // Create video element attached to DOM viewport
-  // Safari and WebKit optimize out GPU decoding if display:none, 0px, or offscreen (-9999px)
   const video = document.createElement('video');
   video.style.position = 'fixed';
   video.style.bottom = '10px';
@@ -69,11 +59,26 @@ export async function extractBurstFrames(
   video.crossOrigin = 'anonymous';
   document.body.appendChild(video);
 
+  const cleanup = () => {
+    try {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      if (video.parentNode) {
+        video.parentNode.removeChild(video);
+      }
+    } catch {
+      // ignore
+    }
+    if (isCreatedUrl) {
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  };
+
   try {
     video.src = url;
     video.load();
 
-    // Wait for video metadata to load
     await new Promise<void>((resolve, reject) => {
       if (video.readyState >= 1) {
         resolve();
@@ -81,12 +86,12 @@ export async function extractBurstFrames(
       }
 
       const onLoadedMetadata = () => {
-        cleanup();
+        cleanupListeners();
         resolve();
       };
 
       const onError = () => {
-        cleanup();
+        cleanupListeners();
         const err = video.error;
         let msg = '動画の読み込みに失敗しました。';
         if (err) {
@@ -100,7 +105,7 @@ export async function extractBurstFrames(
       };
 
       const timeout = setTimeout(() => {
-        cleanup();
+        cleanupListeners();
         if (video.readyState >= 1) {
           resolve();
         } else {
@@ -108,7 +113,7 @@ export async function extractBurstFrames(
         }
       }, 12000);
 
-      const cleanup = () => {
+      const cleanupListeners = () => {
         video.removeEventListener('loadedmetadata', onLoadedMetadata);
         video.removeEventListener('error', onError);
         clearTimeout(timeout);
@@ -118,14 +123,39 @@ export async function extractBurstFrames(
       video.addEventListener('error', onError);
     });
 
-    // Prime the GPU hardware video decoder (Crucial for Safari HEVC / hvc1)
     try {
       await video.play();
       video.pause();
     } catch {
-      // Continue even if browser autoplay restrictions prevent initial play
+      // continue
     }
 
+    return { video, cleanup };
+  } catch (err) {
+    cleanup();
+    throw err;
+  }
+}
+
+/**
+ * Extracts burst frames from video files (including iPhone HEVC/hvc1 MOV, MP4, WebM)
+ * completely client-side in Safari and Chrome.
+ */
+export async function extractBurstFrames(
+  videoSource: File | Blob | string,
+  options: BurstExtractOptions = {}
+): Promise<BurstFrame[]> {
+  const {
+    intervalSeconds = 0.15,
+    maxFrames = 45,
+    startTime = 0,
+    maxWidth = 1080,
+    onProgress,
+  } = options;
+
+  const { video, cleanup } = await createAndPrepareVideo(videoSource);
+
+  try {
     const duration = video.duration || 1;
     const effectiveEndTime = Math.min(
       options.endTime !== undefined ? options.endTime : duration,
@@ -140,13 +170,11 @@ export async function extractBurstFrames(
     const naturalCount = Math.floor(totalDuration / intervalSeconds) + 1;
 
     if (naturalCount <= maxFrames) {
-      // Short video: capture at fine interval (e.g. 0.15s)
       for (let i = 0; i < naturalCount; i++) {
         const t = Math.min(effectiveEndTime, effectiveStartTime + i * intervalSeconds);
         timestamps.push(Math.round(t * 1000) / 1000);
       }
     } else {
-      // Long video: evenly sample maxFrames across entire duration from start to end
       const step = totalDuration / (maxFrames - 1);
       for (let i = 0; i < maxFrames; i++) {
         const t = Math.min(effectiveEndTime, effectiveStartTime + i * step);
@@ -184,11 +212,11 @@ export async function extractBurstFrames(
       await seekAndCaptureFrame(video, ctx, t, targetWidth, targetHeight);
 
       const blob = await new Promise<Blob | null>((res) =>
-        canvas.toBlob((b) => res(b), 'image/jpeg', 0.92)
+        canvas.toBlob((b) => res(b), 'image/jpeg', 0.95)
       );
 
       if (blob) {
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
         frames.push({
           id: `frame-${i}-${Date.now()}`,
           index: i,
@@ -208,21 +236,50 @@ export async function extractBurstFrames(
 
     return frames;
   } finally {
-    // Teardown video element and blob URLs
-    try {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-      if (video.parentNode) {
-        video.parentNode.removeChild(video);
-      }
-    } catch {
-      // ignore cleanup errors
+    cleanup();
+  }
+}
+
+/**
+ * Captures a single frame at the video's full native resolution (e.g. 4K 3840x2160, 1080p).
+ * Completely lossless without downscaling or lossy compression artifacts.
+ */
+export async function captureNativeResolutionFrame(
+  videoSource: File | Blob | string,
+  timestamp: number
+): Promise<{ dataUrl: string; width: number; height: number; blob: Blob }> {
+  const { video, cleanup } = await createAndPrepareVideo(videoSource);
+  try {
+    const width = video.videoWidth || 1920;
+    const height = video.videoHeight || 1080;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) {
+      throw new Error('Canvas context could not be created');
     }
 
-    if (isCreatedUrl) {
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+    await seekAndCaptureFrame(video, ctx, timestamp, width, height);
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((b) => {
+        if (b) resolve(b);
+        else reject(new Error('Failed to capture native resolution frame'));
+      }, 'image/png');
+    });
+
+    const dataUrl = canvas.toDataURL('image/png');
+
+    return {
+      dataUrl,
+      width,
+      height,
+      blob,
+    };
+  } finally {
+    cleanup();
   }
 }
 

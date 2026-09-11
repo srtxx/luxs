@@ -12,7 +12,8 @@ import { ProModal } from '@/components/ProModal';
 import { ContactSheetModal } from '@/components/ContactSheetModal';
 import { CollageModal } from '@/components/CollageModal';
 import { LiveLoopModal } from '@/components/LiveLoopModal';
-import { extractBurstFrames, BurstFrame } from '@/lib/video-burst';
+import { SavedSuccessModal } from '@/components/SavedSuccessModal';
+import { extractBurstFrames, captureNativeResolutionFrame, BurstFrame } from '@/lib/video-burst';
 import { scoreAllFrames } from '@/lib/image-scoring';
 import { enhanceImage } from '@/lib/image-enhancer';
 import { exportCroppedPng, downloadFramesZip } from '@/lib/crop-export';
@@ -21,6 +22,7 @@ import { useAppTheme } from '@/lib/theme';
 
 export default function Home() {
   const [theme, setTheme] = useAppTheme();
+  const [rawVideoSource, setRawVideoSource] = useState<File | Blob | string | null>(null);
   const [stage, setStage] = useState<'idle' | 'extracting' | 'scoring' | 'ready'>('idle');
   const [progress, setProgress] = useState(0);
   const [progressCurrent, setProgressCurrent] = useState(0);
@@ -30,12 +32,16 @@ export default function Home() {
   const [favoritedIds, setFavoritedIds] = useState<string[]>([]);
   const [currentTone, setCurrentTone] = useState<TonePreset>('natural');
   const [toneIntensity, setToneIntensity] = useState(100);
+  const [smoothSkinOffset, setSmoothSkinOffset] = useState(0);
+  const [brightnessOffset, setBrightnessOffset] = useState(0);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('original');
   const [enhancedUrl, setEnhancedUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingAll, setIsSavingAll] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSavedModalOpen, setIsSavedModalOpen] = useState(false);
+  const [lastSavedUrl, setLastSavedUrl] = useState<string | null>(null);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isContactSheetOpen, setIsContactSheetOpen] = useState(false);
@@ -70,6 +76,7 @@ export default function Home() {
     setProgress(10);
     setProgressCurrent(0);
     setProgressTotal(options.maxFrames);
+    setRawVideoSource(videoSource);
 
     try {
       let extracted: BurstFrame[] = [];
@@ -84,7 +91,7 @@ export default function Home() {
               filePath: videoSource,
               intervalSeconds: options.intervalSeconds,
               maxFrames: options.maxFrames,
-              maxWidth: 720,
+              maxWidth: 1080,
             }),
           });
           if (res.ok) {
@@ -98,7 +105,7 @@ export default function Home() {
           formData.append('video', videoSource);
           formData.append('intervalSeconds', String(options.intervalSeconds));
           formData.append('maxFrames', String(options.maxFrames));
-          formData.append('maxWidth', '720');
+          formData.append('maxWidth', '1080');
 
           const res = await fetch('/api/extract-burst', {
             method: 'POST',
@@ -120,6 +127,7 @@ export default function Home() {
         extracted = await extractBurstFrames(videoSource, {
           intervalSeconds: options.intervalSeconds,
           maxFrames: options.maxFrames,
+          maxWidth: 1080,
           onProgress: (p, cur, tot) => {
             setProgress(p);
             setProgressCurrent(cur);
@@ -175,10 +183,10 @@ export default function Home() {
       const effectiveSettings = {
         sharpness: Math.round(matchedTone.settings.sharpness * factor),
         clarity: Math.round(matchedTone.settings.clarity * factor),
-        brightness: Math.round(matchedTone.settings.brightness * factor),
+        brightness: Math.max(-50, Math.min(50, Math.round(matchedTone.settings.brightness * factor) + brightnessOffset)),
         contrast: Math.round(matchedTone.settings.contrast * factor),
         saturation: Math.round(matchedTone.settings.saturation * factor),
-        smoothSkin: Math.round(matchedTone.settings.smoothSkin * factor),
+        smoothSkin: Math.max(0, Math.min(100, Math.round(matchedTone.settings.smoothSkin * factor) + smoothSkinOffset)),
         warmth: matchedTone.settings.warmth !== undefined ? Math.round(matchedTone.settings.warmth * factor) : 0,
         rose: matchedTone.settings.rose !== undefined ? Math.round(matchedTone.settings.rose * factor) : 0,
         upscale: matchedTone.settings.upscale,
@@ -189,7 +197,7 @@ export default function Home() {
     } catch {
       setEnhancedUrl(null);
     }
-  }, [currentFrame, currentTone, toneIntensity]);
+  }, [currentFrame, currentTone, toneIntensity, smoothSkinOffset, brightnessOffset]);
 
   useEffect(() => {
     if (stage === 'ready' && currentFrame) {
@@ -213,32 +221,82 @@ export default function Home() {
     setCurrentIndex(0);
     setFavoritedIds([]);
     setEnhancedUrl(null);
+    setRawVideoSource(null);
+    setSmoothSkinOffset(0);
+    setBrightnessOffset(0);
+    setIsSavedModalOpen(false);
   }, []);
 
-  // Save current frame as PNG
+  // Helper to obtain the highest-quality master image URL (extracts 4K/FHD native frame if source available)
+  const getMasterProcessedUrl = useCallback(async (): Promise<string> => {
+    if (!currentFrame) throw new Error('No frame selected');
+
+    if (rawVideoSource) {
+      try {
+        const nativeFrame = await captureNativeResolutionFrame(
+          rawVideoSource,
+          currentFrame.timestamp
+        );
+
+        const matchedTone = TONE_PRESETS.find((t) => t.id === currentTone);
+        if (!matchedTone || !matchedTone.settings) {
+          return nativeFrame.dataUrl;
+        }
+
+        const factor = toneIntensity / 100;
+        const effectiveSettings = {
+          sharpness: Math.round(matchedTone.settings.sharpness * factor),
+          clarity: Math.round(matchedTone.settings.clarity * factor),
+          brightness: Math.max(-50, Math.min(50, Math.round(matchedTone.settings.brightness * factor) + brightnessOffset)),
+          contrast: Math.round(matchedTone.settings.contrast * factor),
+          saturation: Math.round(matchedTone.settings.saturation * factor),
+          smoothSkin: Math.max(0, Math.min(100, Math.round(matchedTone.settings.smoothSkin * factor) + smoothSkinOffset)),
+          warmth:
+            matchedTone.settings.warmth !== undefined
+              ? Math.round(matchedTone.settings.warmth * factor)
+              : 0,
+          rose:
+            matchedTone.settings.rose !== undefined
+              ? Math.round(matchedTone.settings.rose * factor)
+              : 0,
+          upscale: 1 as const, // Native frame is already original 4K/FullHD resolution
+        };
+
+        const enhanced = await enhanceImage(nativeFrame.dataUrl, effectiveSettings);
+        return enhanced.dataUrl;
+      } catch (err) {
+        console.warn('Native resolution capture fallback to preview image:', err);
+      }
+    }
+
+    return enhancedUrl || currentFrame.dataUrl;
+  }, [currentFrame, rawVideoSource, currentTone, toneIntensity, smoothSkinOffset, brightnessOffset, enhancedUrl]);
+
+  // Save current frame as PNG at full master resolution
   const handleSavePng = useCallback(async () => {
     if (!currentFrame) return;
     setIsSaving(true);
     try {
-      const url = enhancedUrl || currentFrame.dataUrl;
+      const url = await getMasterProcessedUrl();
       const timeStr = currentFrame.timestamp.toFixed(2).replace('.', '_');
       const filename = `luxs_photo_${timeStr}s.png`;
       await exportCroppedPng(url, aspectRatio, filename);
+      setLastSavedUrl(url);
+      setIsSavedModalOpen(true);
       triggerHapticTick(1500, 0.06);
-      showToast('写真を保存しました');
     } catch {
       showToast('保存に失敗しました');
     } finally {
       setIsSaving(false);
     }
-  }, [currentFrame, enhancedUrl, aspectRatio, showToast]);
+  }, [currentFrame, getMasterProcessedUrl, aspectRatio, showToast]);
 
-  // Copy current image to clipboard
+  // Copy current image to clipboard at full master resolution
   const handleCopyImage = useCallback(async () => {
     if (!currentFrame) return;
     setIsCopying(true);
     try {
-      const url = enhancedUrl || currentFrame.dataUrl;
+      const url = await getMasterProcessedUrl();
       const res = await fetch(url);
       const blob = await res.blob();
       await navigator.clipboard.write([
@@ -251,7 +309,7 @@ export default function Home() {
     } finally {
       setIsCopying(false);
     }
-  }, [currentFrame, enhancedUrl, showToast]);
+  }, [currentFrame, getMasterProcessedUrl, showToast]);
 
   // Save all frames as ZIP
   const handleSaveAllZip = useCallback(async () => {
@@ -275,7 +333,8 @@ export default function Home() {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       if (e.key === 'Escape') {
-        if (isCollageModalOpen) setIsCollageModalOpen(false);
+        if (isSavedModalOpen) setIsSavedModalOpen(false);
+        else if (isCollageModalOpen) setIsCollageModalOpen(false);
         else if (isLiveLoopModalOpen) setIsLiveLoopModalOpen(false);
         else if (isContactSheetOpen) setIsContactSheetOpen(false);
         else if (isPrintModalOpen) setIsPrintModalOpen(false);
@@ -283,6 +342,7 @@ export default function Home() {
         else handleCancel();
       } else if (e.key === 'Enter') {
         const isAnyModalOpen =
+          isSavedModalOpen ||
           isContactSheetOpen ||
           isPrintModalOpen ||
           isProModalOpen ||
@@ -300,6 +360,7 @@ export default function Home() {
     stage,
     handleCancel,
     handleSavePng,
+    isSavedModalOpen,
     isContactSheetOpen,
     isPrintModalOpen,
     isProModalOpen,
@@ -415,6 +476,10 @@ export default function Home() {
                 onSelectTone={setCurrentTone}
                 toneIntensity={toneIntensity}
                 onChangeIntensity={setToneIntensity}
+                smoothSkinOffset={smoothSkinOffset}
+                onChangeSmoothSkin={setSmoothSkinOffset}
+                brightnessOffset={brightnessOffset}
+                onChangeBrightness={setBrightnessOffset}
               />
             </div>
           </div>
@@ -467,6 +532,17 @@ export default function Home() {
         frames={frames}
         currentIndex={currentIndex}
         aspectRatio={aspectRatio}
+      />
+
+      {/* Saved Success Modal (Next creative actions) */}
+      <SavedSuccessModal
+        isOpen={isSavedModalOpen}
+        onClose={() => setIsSavedModalOpen(false)}
+        savedImageUrl={lastSavedUrl}
+        onOpenCollage={() => setIsCollageModalOpen(true)}
+        onOpenPrint={() => setIsPrintModalOpen(true)}
+        onOpenLiveLoop={() => setIsLiveLoopModalOpen(true)}
+        onResetVideo={handleCancel}
       />
 
       {/* Pro Modal */}

@@ -78,7 +78,7 @@ func main() {
         continue
       }
       let options: [CFString: Any] = [
-        kCGImageDestinationLossyCompressionQuality: 0.88
+        kCGImageDestinationLossyCompressionQuality: 0.96
       ]
       CGImageDestinationAddImage(destination, cgImage, options as CFDictionary)
       guard CGImageDestinationFinalize(destination) else {
