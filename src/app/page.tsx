@@ -14,7 +14,7 @@ import { CollageModal } from '@/components/CollageModal';
 import { LiveLoopModal } from '@/components/LiveLoopModal';
 import { SavedSuccessModal } from '@/components/SavedSuccessModal';
 import { extractBurstFrames, captureNativeResolutionFrame, BurstFrame } from '@/lib/video-burst';
-import { scoreAllFrames } from '@/lib/image-scoring';
+import { scoreAllFrames, pickEquidistantFrameIndices } from '@/lib/image-scoring';
 import { enhanceImage } from '@/lib/image-enhancer';
 import { exportCroppedPng, downloadFramesZip } from '@/lib/crop-export';
 import { triggerHapticTick } from '@/lib/haptics';
@@ -58,14 +58,27 @@ export default function Home() {
     setTheme(newTheme);
   };
 
-  // Indices of top recommended frames (Rank 1, 2, 3)
+  // Diverse recommended frame indices ordered chronologically across the video timeline
   const recommendedIndices = useMemo(() => {
     return frames
       .map((f, idx) => ({ frame: f, index: idx }))
-      .filter((item) => item.frame.rank && item.frame.rank <= 3)
-      .sort((a, b) => (a.frame.rank || 0) - (b.frame.rank || 0))
+      .filter((item) => item.frame.isRecommended || (item.frame.rank && item.frame.rank <= 6))
+      .sort((a, b) => a.index - b.index)
       .map((item) => item.index);
   }, [frames]);
+
+  // Handler for equidistant frame batch selection
+  const handleSelectEquidistant = useCallback(
+    (count: number) => {
+      if (frames.length === 0) return;
+      const indices = pickEquidistantFrameIndices(frames.length, count);
+      const ids = indices.map((idx) => frames[idx]?.id).filter(Boolean) as string[];
+      setFavoritedIds(ids);
+      triggerHapticTick(1400, 0.05);
+      showToast(`等間隔に ${ids.length} コマを選定しました`);
+    },
+    [frames, showToast]
+  );
 
   // Handle video extraction and scoring
   const handleVideoSelected = async (
@@ -505,6 +518,7 @@ export default function Home() {
         favoritedIds={favoritedIds}
         onToggleFavorite={handleToggleFavorite}
         recommendedIndices={recommendedIndices}
+        onSelectEquidistant={handleSelectEquidistant}
       />
 
       {/* Physical Print Goods Modal */}

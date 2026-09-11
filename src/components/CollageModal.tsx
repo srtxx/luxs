@@ -32,9 +32,13 @@ export const CollageModal: React.FC<CollageModalProps> = ({
     let initial = favoritedIds.slice(0, 4);
     if (initial.length < 2) {
       const needed = 2 - initial.length;
-      const candidates = frames
+      const recCandidates = frames
+        .filter((f) => (f.isRecommended || (f.rank && f.rank <= 4)) && !initial.includes(f.id))
+        .map((f) => f.id);
+      const otherCandidates = frames
         .map((f) => f.id)
-        .filter((id) => !initial.includes(id));
+        .filter((id) => !initial.includes(id) && !recCandidates.includes(id));
+      const candidates = [...recCandidates, ...otherCandidates];
       initial = [...initial, ...candidates.slice(0, needed)];
     }
     return initial;

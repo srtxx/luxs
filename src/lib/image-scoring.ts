@@ -148,7 +148,167 @@ export async function scoreFrame(frame: BurstFrame): Promise<FrameScoreResult> {
 }
 
 /**
- * Scores an array of burst frames and assigns ranks (1 = best pick).
+ * Calculates equidistant frame indices across total frames.
+ * Ensures balanced temporal coverage without clustering.
+ */
+export function pickEquidistantFrameIndices(totalCount: number, pickCount: number): number[] {
+  if (totalCount <= 0 || pickCount <= 0) return [];
+  if (totalCount <= pickCount) {
+    return Array.from({ length: totalCount }, (_, i) => i);
+  }
+
+  const indices: number[] = [];
+  const step = (totalCount - 1) / (pickCount - 1);
+
+  for (let i = 0; i < pickCount; i++) {
+    const idx = Math.round(i * step);
+    const clamped = Math.max(0, Math.min(totalCount - 1, idx));
+    if (!indices.includes(clamped)) {
+      indices.push(clamped);
+    }
+  }
+
+  return indices;
+}
+
+/**
+ * Selects diverse, high-quality recommended frames by dividing the timeline
+ * into equidistant temporal slots and picking the peak sharpness/quality frame in each slot.
+ * Prevents consecutive micro-second duplicate frames from monopolizing recommendations.
+ */
+export function selectDiverseRecommendedFrames(scoredFrames: BurstFrame[]): {
+  recommendedIds: Set<string>;
+  rankMap: Map<string, number>;
+} {
+  const total = scoredFrames.length;
+  const rankMap = new Map<string, number>();
+  const recommendedIds = new Set<string>();
+
+  if (total === 0) {
+    return { recommendedIds, rankMap };
+  }
+
+  if (total <= 3) {
+    const sorted = [...scoredFrames].sort((a, b) => (b.score || 0) - (a.score || 0));
+    sorted.forEach((f, idx) => {
+      rankMap.set(f.id, idx + 1);
+      recommendedIds.add(f.id);
+    });
+    return { recommendedIds, rankMap };
+  }
+
+  // Determine slot count based on total frame count
+  // e.g. 45 frames -> 5-6 diverse picks across beginning, middle, and end
+  let slotCount = 5;
+  if (total <= 8) slotCount = 3;
+  else if (total <= 18) slotCount = 4;
+  else if (total <= 36) slotCount = 5;
+  else slotCount = 6;
+
+  slotCount = Math.min(slotCount, total);
+
+  const slotSize = total / slotCount;
+  const slotCandidates: BurstFrame[] = [];
+
+  for (let s = 0; s < slotCount; s++) {
+    const startIdx = Math.floor(s * slotSize);
+    const endIdx = s === slotCount - 1 ? total - 1 : Math.floor((s + 1) * slotSize) - 1;
+    const slotCenter = (startIdx + endIdx) / 2;
+
+    const framesInSlot = scoredFrames.slice(startIdx, endIdx + 1);
+    if (framesInSlot.length === 0) continue;
+
+    // Find the best frame in this slot.
+    // In case of tie, prefer the frame closest to the slot center.
+    let bestFrame = framesInSlot[0];
+    let bestScore = bestFrame.score || 0;
+    let minCenterDist = Math.abs(startIdx - slotCenter);
+
+    for (let i = 0; i < framesInSlot.length; i++) {
+      const f = framesInSlot[i];
+      const score = f.score || 0;
+      const actualIdx = startIdx + i;
+      const dist = Math.abs(actualIdx - slotCenter);
+
+      if (score > bestScore || (score === bestScore && dist < minCenterDist)) {
+        bestFrame = f;
+        bestScore = score;
+        minCenterDist = dist;
+      }
+    }
+
+    slotCandidates.push(bestFrame);
+  }
+
+  // Deduplicate and suppress near-adjacent picks (Non-Maximum Suppression across slot borders)
+  const chosenFrames: BurstFrame[] = [];
+  const minFrameDistance = Math.max(2, Math.floor(slotSize * 0.45));
+
+  for (let i = 0; i < slotCandidates.length; i++) {
+    const candidate = slotCandidates[i];
+    const prev = chosenFrames[chosenFrames.length - 1];
+
+    if (!prev) {
+      chosenFrames.push(candidate);
+      continue;
+    }
+
+    const prevIndex = scoredFrames.findIndex((f) => f.id === prev.id);
+    const curIndex = scoredFrames.findIndex((f) => f.id === candidate.id);
+
+    if (Math.abs(curIndex - prevIndex) < minFrameDistance) {
+      // Too close: keep whichever has higher quality score
+      if ((candidate.score || 0) > (prev.score || 0)) {
+        chosenFrames[chosenFrames.length - 1] = candidate;
+      }
+    } else {
+      chosenFrames.push(candidate);
+    }
+  }
+
+  // Ensure we still have at least 3 diverse recommendations if available
+  if (chosenFrames.length < Math.min(3, total)) {
+    const existingIds = new Set(chosenFrames.map((f) => f.id));
+    const remaining = [...scoredFrames]
+      .filter((f) => !existingIds.has(f.id))
+      .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    for (const cand of remaining) {
+      const candIdx = scoredFrames.findIndex((f) => f.id === cand.id);
+      const isFarEnough = chosenFrames.every((chosen) => {
+        const cIdx = scoredFrames.findIndex((f) => f.id === chosen.id);
+        return Math.abs(cIdx - candIdx) >= 2;
+      });
+      if (isFarEnough) {
+        chosenFrames.push(cand);
+        if (chosenFrames.length >= Math.min(3, total)) break;
+      }
+    }
+  }
+
+  // Mark all chosen frames as recommended
+  chosenFrames.forEach((f) => recommendedIds.add(f.id));
+
+  // Sort chosen frames by score descending to assign Ranks (Rank 1 = Absolute Best)
+  const rankedChosen = [...chosenFrames].sort((a, b) => (b.score || 0) - (a.score || 0));
+  rankedChosen.forEach((item, index) => {
+    rankMap.set(item.id, index + 1);
+  });
+
+  // Assign subsequent ranks to other non-recommended frames
+  const nonChosen = scoredFrames
+    .filter((f) => !recommendedIds.has(f.id))
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+  nonChosen.forEach((item, index) => {
+    rankMap.set(item.id, rankedChosen.length + index + 1);
+  });
+
+  return { recommendedIds, rankMap };
+}
+
+/**
+ * Scores an array of burst frames and assigns ranks with diverse interval-aware peak selection.
  */
 export async function scoreAllFrames(
   frames: BurstFrame[],
@@ -172,15 +332,12 @@ export async function scoreAllFrames(
     }
   }
 
-  // Assign ranks based on final score descending
-  const sorted = [...scoredFrames].sort((a, b) => (b.score || 0) - (a.score || 0));
-  const rankMap = new Map<string, number>();
-  sorted.forEach((item, index) => {
-    rankMap.set(item.id, index + 1);
-  });
+  // Apply diverse interval recommendation logic
+  const { recommendedIds, rankMap } = selectDiverseRecommendedFrames(scoredFrames);
 
   return scoredFrames.map((frame) => ({
     ...frame,
     rank: rankMap.get(frame.id) || 999,
+    isRecommended: recommendedIds.has(frame.id),
   }));
 }

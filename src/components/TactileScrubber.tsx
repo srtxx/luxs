@@ -179,6 +179,7 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
   }, [currentIndex, frames.length, onIndexChange]);
 
   const currentFrame = frames[currentIndex];
+  const bestIndex = frames.findIndex((f) => f.rank === 1);
 
   return (
     <div className="w-full flex flex-col items-center gap-1.5 select-none relative">
@@ -203,31 +204,53 @@ export const TactileScrubber: React.FC<TactileScrubberProps> = ({
         </div>
 
         {/* Center/Right: Quick Recommendation Jump Chips */}
-        <div className="flex items-center gap-1.5">
-          {recommendedIndices.slice(0, 3).map((recIdx, idx) => {
-            const isSelected = currentIndex === recIdx;
-            const label = idx === 0 ? 'ベスト' : `候補${idx + 1}`;
-            return (
-              <button
-                key={recIdx}
-                type="button"
-                onClick={() => {
-                  onIndexChange(recIdx);
-                  triggerHapticTick(1350, 0.05);
-                }}
-                className={`px-2.5 py-0.5 rounded-md text-[10px] font-medium transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-[var(--accent-primary)] text-white shadow-2xs font-semibold'
-                    : 'bg-[var(--surface-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] border border-[var(--surface-border)]'
-                }`}
-                title={`おすすめコマ ${idx + 1} に移動`}
-              >
-                {label}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-1.5 overflow-x-auto max-w-[65%] sm:max-w-none no-scrollbar py-0.5">
+          {/* Best frame (Rank 1) chip */}
+          {bestIndex !== -1 && (
+            <button
+              type="button"
+              onClick={() => {
+                onIndexChange(bestIndex);
+                triggerHapticTick(1350, 0.05);
+              }}
+              className={`px-2.5 py-0.5 rounded-md text-[10px] font-medium transition-all shrink-0 cursor-pointer ${
+                currentIndex === bestIndex
+                  ? 'bg-[var(--accent-primary)] text-white shadow-2xs font-semibold'
+                  : 'bg-[var(--accent-primary-subtle)] text-[var(--accent-primary-text)] border border-[var(--accent-primary)]/30 hover:border-[var(--accent-primary)]'
+              }`}
+              title="最高品質のベストコマに移動"
+            >
+              ベスト
+            </button>
+          )}
 
-          <span className="text-[11px] text-[var(--foreground-muted)] font-medium pl-1.5 border-l border-[var(--surface-border)]">
+          {/* Diverse candidate chips */}
+          {recommendedIndices
+            .filter((idx) => idx !== bestIndex)
+            .slice(0, 4)
+            .map((recIdx, idx) => {
+              const isSelected = currentIndex === recIdx;
+              return (
+                <button
+                  key={recIdx}
+                  type="button"
+                  onClick={() => {
+                    onIndexChange(recIdx);
+                    triggerHapticTick(1350, 0.05);
+                  }}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-all shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'bg-[var(--accent-primary)] text-white shadow-2xs font-semibold'
+                      : 'bg-[var(--surface-subtle)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] border border-[var(--surface-border)]'
+                  }`}
+                  title={`おすすめコマ ${idx + 1} に移動`}
+                >
+                  候補{idx + 1}
+                </button>
+              );
+            })}
+
+          <span className="text-[11px] text-[var(--foreground-muted)] font-medium pl-1.5 border-l border-[var(--surface-border)] shrink-0">
             {currentIndex + 1} / {totalFrames}
           </span>
         </div>

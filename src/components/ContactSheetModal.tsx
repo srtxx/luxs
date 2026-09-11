@@ -14,6 +14,7 @@ interface ContactSheetModalProps {
   favoritedIds: string[];
   onToggleFavorite: (frameId: string) => void;
   recommendedIndices: number[];
+  onSelectEquidistant?: (count: number) => void;
 }
 
 type FilterType = 'all' | 'favorited' | 'recommended';
@@ -27,6 +28,7 @@ export const ContactSheetModal: React.FC<ContactSheetModalProps> = ({
   favoritedIds,
   onToggleFavorite,
   recommendedIndices,
+  onSelectEquidistant,
 }) => {
   const [filter, setFilter] = useState<FilterType>('all');
 
@@ -115,6 +117,35 @@ export const ContactSheetModal: React.FC<ContactSheetModalProps> = ({
           </button>
         </div>
 
+        {/* Sub-bar: Equidistant Batch Selection Toolbar */}
+        {onSelectEquidistant && frames.length > 3 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-2 border-b border-[var(--surface-border)] bg-[var(--surface)] text-[11px] tabular-numbers">
+            <div className="flex items-center gap-2 text-[var(--foreground-muted)]">
+              <span className="font-medium text-[var(--foreground)]">等間隔ピックアップ:</span>
+              <span className="hidden sm:inline">全編からバリエーション豊かなコマを一括選択</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {[4, 6, 8].map((count) => {
+                if (frames.length < count) return null;
+                return (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => {
+                      onSelectEquidistant(count);
+                      setFilter('favorited');
+                    }}
+                    className="px-2.5 py-0.5 rounded-md bg-[var(--surface-subtle)] hover:bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--surface-border)] font-medium transition-colors cursor-pointer active:scale-95 text-[11px]"
+                    title={`動画全体から均等に${count}コマを選定して保存候補に追加`}
+                  >
+                    {count}コマ
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Content: Grid of frames */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[var(--canvas-bg)]">
           {filteredItems.length === 0 ? (
@@ -153,7 +184,7 @@ export const ContactSheetModal: React.FC<ContactSheetModalProps> = ({
                       {isRec && (
                         <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-[var(--accent-primary-subtle)] border border-[var(--accent-primary)]/40 text-[9px] font-semibold text-[var(--accent-primary-text)] backdrop-blur-xs flex items-center gap-1 shadow-2xs">
                           <span className="w-1 h-1 rounded-full bg-[var(--accent-primary)]" />
-                          おすすめ
+                          {frame.rank === 1 ? 'ベスト' : 'おすすめ'}
                         </div>
                       )}
 

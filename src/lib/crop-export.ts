@@ -99,7 +99,7 @@ export async function downloadFramesZip(
   for (let i = 0; i < frames.length; i++) {
     const frame = frames[i];
     const base64Data = frame.dataUrl.replace(/^data:image\/(png|jpeg);base64,/, '');
-    const rankPrefix = frame.rank && frame.rank <= 3 ? `best_${frame.rank}_` : '';
+    const rankPrefix = frame.rank === 1 ? 'best_1_' : frame.isRecommended && frame.rank ? `best_${frame.rank}_` : '';
     const name = `${rankPrefix}shot_${String(i + 1).padStart(3, '0')}_${frame.timestamp.toFixed(2)}s.png`;
     folder.file(name, base64Data, { base64: true });
 

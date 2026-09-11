@@ -10,6 +10,7 @@ export interface BurstFrame {
   sharpnessScore?: number;
   exposureScore?: number;
   rank?: number;
+  isRecommended?: boolean;
 }
 
 export interface BurstExtractOptions {
